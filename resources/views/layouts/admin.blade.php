@@ -16,6 +16,7 @@
         <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
             <div class="flex items-center gap-4">
                 <a href="{{ route('admin.products.index') }}" class="font-semibold">Admin – Termékek</a>
+                <a href="{{ route('admin.orders.index') }}" class="text-emerald-100 hover:text-white text-sm">Megrendelések</a>
                 <a href="{{ url('/') }}" class="text-emerald-200 hover:text-white text-sm">Főoldal</a>
             </div>
             <span class="text-emerald-200 text-sm">{{ auth()->user()->name }}</span>
