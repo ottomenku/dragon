@@ -5,6 +5,19 @@
 
     RewriteEngine On
 
+    # --- EGYEDI DOMAIN SZŰRÉS ---
+    # Ha nem a megengedett domaineken érkezik a kérés
+    RewriteCond %{HTTP_HOST} !^triemdragonherbs\.hu$ [NC]
+    RewriteCond %{HTTP_HOST} !^www\.triemdragonherbs\.hu$ [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1$
+    RewriteCond %{HTTP_HOST} !^localhost$
+    # Akkor eldobjuk a kérést egy 403-as hibával
+    RewriteRule ^(.*)$ - [R=403,L]
+
+    # Saját hibaoldal tartalom a 403-as kódhoz (linkkel)
+    ErrorDocument 403 "<html><body style='text-align:center;font-family:sans-serif;padding-top:50px;'><h2>Ez a tartalom ezen a cimen nem erheto el.</h2><p>Kerjuk, latogasson el a hivatalos oldalunkra:</p><a href='http://triemdragonherbs.hu' style='color:green;font-weight:bold;font-size:1.2rem;'>triemdragonherbs.hu</a></body></html>"
+    # --- EGYEDI DOMAIN SZŰRÉS VÉGE ---
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
