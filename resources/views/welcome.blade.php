@@ -69,7 +69,7 @@
                     type="button"
                     class="relative inline-flex items-center justify-center w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white shadow"
                     data-bs-toggle="modal"
-                    data-bs-target="#cartModal"
+                    data-bs-target="#cartModal" style="display: none"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M3 3h2l.4 2M7 13h10l2-7H6.4M7 13L5.4 5M7 13l-2 7h14M10 21a1 1 0 100-2 1 1 0 000 2zm8 0a1 1 0 100-2 1 1 0 000 2z" />
@@ -101,8 +101,8 @@
             <div class="flex justify-end mt-6 -mb-24 md:-mb-32 relative z-20">
                 <img src="{{ asset('img/logo.jpg') }}" alt="Triem Dragonherbs logo" class="logo-circle">
             </div>
-            <div class="absolute left-4 bottom-4 flex gap-2">
-                <a href="https://www.facebook.com/trimedragonherbs" target="_blank" rel="noopener" class="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-700/90 hover:bg-emerald-600 text-white text-xs font-medium shadow">
+            <div class="absolute left-4 bottom-4 flex gap-2" >
+                <a href="https://www.facebook.com/trimedragonherbs" target="_blank" style="display: none" rel="noopener" class="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-700/90 hover:bg-emerald-600 text-white text-xs font-medium shadow">
                     👍 Tetszik
                 </a>
                 <a href="https://www.facebook.com/sharer/sharer.php?u={{ urlencode('https://trimedragonherbs.hu') }}" target="_blank" rel="noopener" class="inline-flex items-center px-3 py-1.5 rounded-full bg-emerald-700/90 hover:bg-emerald-600 text-white text-xs font-medium shadow">
@@ -146,7 +146,7 @@
             <div class="max-w-6xl mx-auto px-4">
                 <h2 class="font-display text-3xl md:text-4xl font-semibold text-emerald-900 mb-8 text-center">Termékeink</h2>
                 @if(isset($products) && $products->isNotEmpty())
-                    <div id="productsCarousel" class="carousel slide" data-bs-ride="carousel">
+                    <div id="productsCarousel" class="carousel slide" data-bs-ride="false">
                         <div class="carousel-inner">
                             @foreach($products->chunk(3) as $chunkIndex => $chunk)
                                 <div class="carousel-item {{ $chunkIndex === 0 ? 'active' : '' }}">
@@ -171,7 +171,7 @@
                                                             <p class="mb-0 font-semibold text-emerald-800">{{ number_format($product->ar) }} Ft</p>
                                                             <div class="d-flex gap-1">
                                                                 <button
-                                                                    type="button"
+                                                                    type="button" style="display: none"
                                                                     class="btn btn-sm btn-success btn-add-to-cart"
                                                                     data-product-id="{{ $product->id }}"
                                                                     data-product-title="{{ $product->title }}"
