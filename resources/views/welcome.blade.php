@@ -18,7 +18,7 @@
         body { font-family: 'Source Sans 3', sans-serif; }
         .font-display { font-family: 'Cormorant Garamond', serif; }
         .header-bg {
-            background-image: url("{{ asset('img/boritokep.jpg') }}");
+            background-image: url("{{ asset('img/boritokep2.jpg') }}");
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
@@ -126,6 +126,7 @@
             </div>
             <div id="intro-more" class="intro-more">
                 <div class="mt-6 pt-6 border-t border-emerald-200 space-y-4 text-gray-700 leading-relaxed">
+                      <p class="text-lg font-medium text-emerald-800">Rólunk</p>
                     <p>A mi történetünk a Mátra aljában Nagyrédén kezdődött.</p>
                     <p>2015-ben három fővel, családi összefogással indítottuk el a gazdaságunkat szőlőtermesztéssel. A közös munka, a föld szeretete és az egymásba vetett bizalom már akkor meghatározta mindennapjainkat. Nem csupán gazdálkodni szerettünk volna, hanem értéket teremteni.</p>
                     <p>Az évek során egyre inkább a gyógynövények világa felé fordultam. A természetgyógyító ereje, a növények tudatos termesztése és feldolgozása hívatássá vált számomra. 2025-ben Gyógy- és fűszernövény technológusként végeztem a MATE Róbert Károly Campusán, ahol szakmai tudásomat tudományos alapokra helyeztem.</p>
