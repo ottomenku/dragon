@@ -7,10 +7,10 @@
 
     # --- EGYEDI DOMAIN SZŰRÉS ---
     # Ha nem a megengedett domaineken érkezik a kérés
-    RewriteCond %{HTTP_HOST} !^triemdragonherbs\.hu$ [NC]
-    RewriteCond %{HTTP_HOST} !^www\.triemdragonherbs\.hu$ [NC]
-    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1$
-    RewriteCond %{HTTP_HOST} !^localhost$
+    RewriteCond %{HTTP_HOST} !^triemdragonherbs\.hu(:[0-9]+)?$ [NC]
+    RewriteCond %{HTTP_HOST} !^www\.triemdragonherbs\.hu(:[0-9]+)?$ [NC]
+    RewriteCond %{HTTP_HOST} !^127\.0\.0\.1(:[0-9]+)?$ [NC]
+    RewriteCond %{HTTP_HOST} !^localhost(:[0-9]+)?$ [NC]
     # Akkor eldobjuk a kérést egy 403-as hibával
     RewriteRule ^(.*)$ - [R=403,L]
 

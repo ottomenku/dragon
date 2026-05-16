@@ -12,14 +12,17 @@ class Product extends Model
     protected $fillable = [
         'image',
         'title',
+        'category',
         'intro',
         'moreinfo',
         'ar',
         'kedv',
         'public',
+        'tomain',
     ];
 
     protected $casts = [
         'public' => 'boolean',
+        'tomain' => 'boolean',
     ];
 }

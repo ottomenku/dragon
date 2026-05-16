@@ -16,6 +16,8 @@
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Név</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Telefon</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Összeg</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fizetés</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Fizetve</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kiküldve</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Dátum</th>
                         <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Műveletek</th>
@@ -28,6 +30,12 @@
                             <td class="px-4 py-3 font-medium text-gray-900">{{ $order->name }}</td>
                             <td class="px-4 py-3 text-gray-700">{{ $order->phone }}</td>
                             <td class="px-4 py-3 text-gray-800 font-semibold">{{ number_format($order->total_price) }} Ft</td>
+                            <td class="px-4 py-3 text-gray-700">
+                                {{ $order->paymentMethodLabel() }}
+                            </td>
+                            <td class="px-4 py-3 text-gray-700 text-sm">
+                                {{ $order->fizetveLabel() }}
+                            </td>
                             <td class="px-4 py-3">
                                 @if($order->shipped)
                                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">Igen</span>
@@ -37,6 +45,7 @@
                             </td>
                             <td class="px-4 py-3 text-gray-600 text-sm">{{ $order->created_at->format('Y.m.d H:i') }}</td>
                             <td class="px-4 py-3 text-right space-x-2">
+                                <button type="button" class="btn-order-transactions text-violet-600 hover:text-violet-800 text-sm font-medium" data-order-id="{{ $order->id }}">Tranzakció</button>
                                 <a href="{{ route('admin.orders.show', $order) }}" class="text-emerald-600 hover:text-emerald-800 text-sm font-medium">Megnyitás</a>
                                 <a href="{{ route('admin.orders.edit', $order) }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">Szerkesztés</a>
                                 <form action="{{ route('admin.orders.destroy', $order) }}" method="POST" class="inline" onsubmit="return confirm('Biztosan törlöd ezt a megrendelést?');">
@@ -48,7 +57,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">Még nincs megrendelés.</td>
+                            <td colspan="9" class="px-4 py-8 text-center text-gray-500">Még nincs megrendelés.</td>
                         </tr>
                     @endforelse
                 </tbody>
@@ -60,5 +69,7 @@
             </div>
         @endif
     </div>
+
+    @include('admin.orders._transactions_modal')
 @endsection
 

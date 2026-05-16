@@ -15,6 +15,7 @@
                     <tr>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kép</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cím</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategória</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ár</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kedv</th>
                         <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Publikus</th>
@@ -32,6 +33,13 @@
                                 @endif
                             </td>
                             <td class="px-4 py-3 font-medium text-gray-900">{{ $product->title }}</td>
+                            <td class="px-4 py-3 text-gray-600">
+                                @switch($product->category)
+                                    @case('illoolajok') Illóolajok @break
+                                    @case('kozmetikumok') Kozmetikumok @break
+                                    @default Gyógyteák
+                                @endswitch
+                            </td>
                             <td class="px-4 py-3 text-gray-600">{{ number_format($product->ar) }} Ft</td>
                             <td class="px-4 py-3 text-gray-600">{{ $product->kedv }}</td>
                             <td class="px-4 py-3">
@@ -52,7 +60,7 @@
                         </tr>
                     @empty
                         <tr>
-                            <td colspan="6" class="px-4 py-8 text-center text-gray-500">Még nincs termék.</td>
+                            <td colspan="7" class="px-4 py-8 text-center text-gray-500">Még nincs termék.</td>
                         </tr>
                     @endforelse
                 </tbody>

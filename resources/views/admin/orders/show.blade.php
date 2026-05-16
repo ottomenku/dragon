@@ -26,7 +26,13 @@
                     <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Nem</span>
                 @endif
             </p>
+            <p><span class="font-medium">Fizetési mód:</span> {{ $order->paymentMethodLabel() }}</p>
+            <p><span class="font-medium">Fizetve:</span> {{ $order->fizetveLabel() }}</p>
             <p><span class="font-medium">Végösszeg:</span> {{ number_format($order->total_price) }} Ft</p>
+            @if($order->payment_method === 'barion')
+                <p><span class="font-medium">Barion PaymentId:</span> {{ $order->barion_payment_id ?: '—' }}</p>
+                <p><span class="font-medium">Fizetés állapota:</span> {{ $order->payment_status ?: '—' }}</p>
+            @endif
             @if($order->note)
                 <p class="mt-2">
                     <span class="font-medium">Megjegyzés:</span><br>
@@ -67,10 +73,15 @@
         </div>
     </div>
 
-    <div class="mt-6">
+    <div class="mt-6 flex flex-wrap gap-3">
+        <button type="button" class="btn-order-transactions inline-flex items-center px-4 py-2 bg-violet-600 hover:bg-violet-700 text-white font-medium rounded-lg" data-order-id="{{ $order->id }}">
+            Tranzakciók
+        </button>
         <a href="{{ route('admin.orders.edit', $order) }}" class="inline-flex items-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg">
             Megrendelés szerkesztése
         </a>
     </div>
+
+    @include('admin.orders._transactions_modal')
 @endsection
 

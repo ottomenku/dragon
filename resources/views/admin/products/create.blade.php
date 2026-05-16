@@ -24,6 +24,16 @@
         </div>
 
         <div>
+            <label for="category" class="block text-sm font-medium text-gray-700 mb-1">Kategória *</label>
+            <select name="category" id="category" required class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
+                <option value="gyogyteak" {{ old('category', 'gyogyteak') === 'gyogyteak' ? 'selected' : '' }}>Gyógyteák</option>
+                <option value="illoolajok" {{ old('category') === 'illoolajok' ? 'selected' : '' }}>Illóolajok</option>
+                <option value="kozmetikumok" {{ old('category') === 'kozmetikumok' ? 'selected' : '' }}>Kozmetikumok</option>
+            </select>
+            @error('category')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
+        </div>
+
+        <div>
             <label for="intro" class="block text-sm font-medium text-gray-700 mb-1">Intro (max 255 karakter) *</label>
             <input type="text" name="intro" id="intro" value="{{ old('intro') }}" maxlength="255" required class="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500">
             @error('intro')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
@@ -55,6 +65,13 @@
             <label for="public" class="ml-2 text-sm text-gray-700">Publikus (látható)</label>
         </div>
         @error('public')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
+
+        <div class="flex items-center">
+            <input type="hidden" name="tomain" value="0">
+            <input type="checkbox" name="tomain" id="tomain" value="1" {{ old('tomain', false) ? 'checked' : '' }} class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500">
+            <label for="tomain" class="ml-2 text-sm text-gray-700">Nyitólapra</label>
+        </div>
+        @error('tomain')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
 
         <div class="pt-4">
             <button type="submit" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg">Mentés</button>

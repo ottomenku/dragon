@@ -8,11 +8,9 @@ use Symfony\Component\HttpFoundation\Response;
 
 class EnsureUserIsAdmin
 {
-    private const ALLOWED_IDS = [1, 2, 3];
-
     public function handle(Request $request, Closure $next): Response
     {
-        if (!$request->user() || !in_array((int) $request->user()->id, self::ALLOWED_IDS, true)) {
+        if (! $request->user()?->isAdmin()) {
             abort(403, 'Nincs jogosultságod az admin felület eléréséhez.');
         }
 

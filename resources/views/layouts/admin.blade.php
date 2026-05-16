@@ -17,6 +17,8 @@
             <div class="flex items-center gap-4">
                 <a href="{{ route('admin.products.index') }}" class="font-semibold">Admin – Termékek</a>
                 <a href="{{ route('admin.orders.index') }}" class="text-emerald-100 hover:text-white text-sm">Megrendelések</a>
+                <a href="{{ route('admin.barion.edit') }}" class="text-emerald-100 hover:text-white text-sm">Barion</a>
+                <a href="{{ route('admin.webshop.edit') }}" class="text-emerald-100 hover:text-white text-sm">Webshop</a>
                 <a href="{{ url('/') }}" class="text-emerald-200 hover:text-white text-sm">Főoldal</a>
             </div>
             <span class="text-emerald-200 text-sm">{{ auth()->user()->name }}</span>

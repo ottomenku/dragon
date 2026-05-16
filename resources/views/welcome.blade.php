@@ -80,12 +80,18 @@
                 </button>
 
                 @auth
+                    @if($webshopLinkVisible ?? false)
+                        <a href="{{ route('webshop') }}" class="text-white/95 hover:text-white text-sm font-medium">Webshop</a>
+                    @endif
                     <a href="{{ route('home') }}" class="text-white/95 hover:text-white text-sm font-medium">Kezdőlap</a>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
                         @csrf
                         <button type="submit" class="text-white/95 hover:text-white text-sm font-medium underline">Kijelentkezés</button>
                     </form>
                 @else
+                    @if($webshopLinkVisible ?? false)
+                        <a href="{{ route('webshop') }}" class="text-white/95 hover:text-white text-sm font-medium">Webshop</a>
+                    @endif
                     <a href="{{ route('login') }}" class="text-white/95 hover:text-white text-sm font-medium">Bejelentkezés</a>
                     <a href="{{ route('register') }}" class="text-white bg-emerald-700/90 hover:bg-emerald-600 px-3 py-1.5 rounded-lg text-sm font-medium">Regisztráció</a>
                 @endauth
@@ -258,8 +264,12 @@
                             </table>
                             <div class="d-flex justify-content-between align-items-center mt-3">
                                 <div>
-                                    <div class="text-sm text-gray-600">Fizetési mód: <strong>Utánvétel</strong></div>
-                                    <div class="text-xs text-gray-500">A rendelés értékét a csomag átvételekor kell kifizetni.</div>
+                                    <label for="orderPaymentMethod" class="form-label mb-1">Fizetési mód</label>
+                                    <select id="orderPaymentMethod" class="form-select form-select-sm">
+                                        <option value="cod">Utánvét</option>
+                                        <option value="otp">OTP kártya</option>
+                                    </select>
+                                    <div class="text-xs text-gray-500 mt-1">OTP fizetés előkészítve, banki éles adatok bekötése után aktiválható.</div>
                                 </div>
                                 <div class="text-end">
                                     <div class="text-sm text-gray-600">Végösszeg:</div>
@@ -338,9 +348,164 @@
                     <p><a href="tel:+36303037196" class="hover:text-emerald-200">+36 30/303 7196</a></p>
                 </div>
             </div>
+            <div class="mt-6 flex flex-wrap gap-4 text-sm">
+                <button type="button" class="underline hover:text-emerald-200" data-bs-toggle="modal" data-bs-target="#aszfModal">
+                    ÁSZF
+                </button>
+                <button type="button" class="underline hover:text-emerald-200" data-bs-toggle="modal" data-bs-target="#adatkezelesModal">
+                    Adatkezelési tájékoztató
+                </button>
+            </div>
             <p class="mt-8 text-emerald-200/90 text-sm">© {{ date('Y') }} Triem Dragonherbs. Minden jog fenntartva.</p>
         </div>
     </footer>
+
+    <div class="modal fade" id="aszfModal" tabindex="-1" aria-labelledby="aszfModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display text-2xl" id="aszfModalLabel">Általános Szerződési Feltételek (ÁSZF)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body text-gray-700 leading-relaxed space-y-4">
+                    <p><strong>1. Szolgáltató adatai</strong><br>
+                    Cég neve: Triem Dragonherbs<br>
+                    Székhely: 3214 Nagyréde, Kossuth L. utca 17.<br>
+                    Üzemeltető: Családi gazdaság<br>
+                    E-mail: medmo1973@gmail.com<br>
+                    Telefonszám: +36 30 968 9532<br>
+                    A webáruház használatával a vásárló elfogadja a jelen Általános Szerződési Feltételeket.</p>
+
+                    <p><strong>2. Termékek és szolgáltatások</strong><br>
+                    A webshopban gyógynövények, szárítmányok, illatvizek és illóolajok kerülnek értékesítésre.<br>
+                    A termékek leírása tájékoztató jellegű, nem minősülnek gyógyhatásra vonatkozó állításnak, és nem helyettesítik az orvosi tanácsadást.</p>
+
+                    <p><strong>3. Megrendelés menete</strong><br>
+                    A vásárlás a webáruház felületén történik.<br>
+                    A rendelés leadása után a Vásárló automatikus visszaigazoló e-mailt kap.<br>
+                    A szerződés a megrendelés visszaigazolásával jön létre.</p>
+
+                    <p><strong>4. Árak és fizetés</strong><br>
+                    A feltüntetett árak forintban értendők és tartalmazzák az áfát.<br>
+                    Fizetési módok:<br>
+                    banki átutalás<br>
+                    utánvét<br>
+                    bankkártyás fizetés (ha elérhető)</p>
+
+                    <p><strong>5. Szállítás</strong><br>
+                    A rendeléseket a Szolgáltató:<br>
+                    futárszolgálattal<br>
+                    csomagküldő szolgáltatással<br>
+                    vagy személyes átvétellel<br>
+                    juttatja el a Vásárlóhoz.<br>
+                    Szállítási idő:<br>
+                    👉 5–10 munkanap<br>
+                    A pontos szállítási költség a rendelés során kerül feltüntetésre.</p>
+
+                    <p><strong>6. Elállási jog</strong><br>
+                    A Vásárlót a megrendeléstől számított 14 napon belül elállási jog illeti meg.<br>
+                    Elállás esetén a Vásárló köteles a terméket sértetlen állapotban visszajuttatni.<br>
+                    A visszaküldés költsége a Vásárlót terheli.<br>
+                    ❗ Kivétel az elállás alól<br>
+                    Az elállási jog nem gyakorolható:<br>
+                    felbontott termékek esetén<br>
+                    higiéniai okokból nem visszazárható termékeknél<br>
+                    (pl. bontott illóolaj, felbontott illatvíz stb.)</p>
+
+                    <p><strong>7. Termék visszaküldés</strong><br>
+                    A visszaküldött terméknek:<br>
+                    sértetlennek<br>
+                    eredeti csomagolásban lévőnek<br>
+                    használatmentesnek kell lennie</p>
+
+                    <p><strong>8. Felelősség</strong><br>
+                    A Szolgáltató nem vállal felelősséget:<br>
+                    a nem rendeltetésszerű használatból eredő károkért<br>
+                    a termékek helytelen alkalmazásáért<br>
+                    A termékek használata a Vásárló saját felelősségére történik.</p>
+
+                    <p><strong>9. Adatkezelés</strong><br>
+                    A személyes adatok kezelése a hatályos adatvédelmi jogszabályoknak megfelelően történik.<br>
+                    Részletes adatkezelési tájékoztató külön dokumentumban érhető el.</p>
+
+                    <p><strong>10. Jogviták</strong><br>
+                    A felek a vitás kérdéseket elsősorban békés úton rendezik.<br>
+                    Amennyiben ez nem vezet eredményre, a hatáskörrel rendelkező magyar bíróság jogosult eljárni.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="adatkezelesModal" tabindex="-1" aria-labelledby="adatkezelesModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display text-2xl" id="adatkezelesModalLabel">Adatkezelési Tájékoztató</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body text-gray-700 leading-relaxed space-y-4">
+                    <p><strong>1. Az adatkezelő adatai</strong><br>
+                    Név: Triem Dragonherbs<br>
+                    Székhely: 3214 Nagyréde, Kossuth L. utca 17.<br>
+                    Üzemeltető: Családi gazdaság<br>
+                    E-mail: medmo1973@gmail.com<br>
+                    Telefonszám: +36 30 968 9532</p>
+
+                    <p><strong>2. Az adatkezelés célja</strong><br>
+                    Az adatkezelés célja:<br>
+                    a megrendelések teljesítése<br>
+                    kapcsolattartás a vásárlókkal<br>
+                    számlázás<br>
+                    jogszabályi kötelezettségek teljesítése</p>
+
+                    <p><strong>3. Kezelt személyes adatok köre</strong><br>
+                    A webshop használata során az alábbi adatok kerülhetnek rögzítésre:<br>
+                    név<br>
+                    e-mail cím<br>
+                    telefonszám<br>
+                    szállítási cím<br>
+                    számlázási adatok<br>
+                    rendelési adatok</p>
+
+                    <p><strong>4. Az adatkezelés jogalapja</strong><br>
+                    Az adatkezelés jogalapja:<br>
+                    a szerződés teljesítése<br>
+                    jogi kötelezettség teljesítése<br>
+                    a vásárló hozzájárulása</p>
+
+                    <p><strong>5. Az adatok tárolásának időtartama</strong><br>
+                    A személyes adatokat:<br>
+                    a megrendelés teljesítéséig<br>
+                    vagy a jogszabályban előírt ideig (pl. számlázás miatt)<br>
+                    őrizzük meg.</p>
+
+                    <p><strong>6. Adattovábbítás</strong><br>
+                    A személyes adatok csak az alábbi esetekben kerülnek továbbításra:<br>
+                    futárszolgálat részére (szállítás céljából)<br>
+                    könyvelő részére (számlázás miatt)<br>
+                    Az adatok harmadik fél számára marketing célra nem kerülnek átadásra.</p>
+
+                    <p><strong>7. Adatbiztonság</strong><br>
+                    Az adatokat:<br>
+                    biztonságosan tároljuk<br>
+                    illetéktelen hozzáféréstől védjük<br>
+                    csak az arra jogosult személyek férnek hozzá</p>
+
+                    <p><strong>8. Az érintettek jogai</strong><br>
+                    A vásárlót az alábbi jogok illetik meg:<br>
+                    hozzáférés a saját adataihoz<br>
+                    adatok helyesbítése<br>
+                    adatok törlése<br>
+                    adatkezelés korlátozása<br>
+                    tiltakozás az adatkezelés ellen</p>
+
+                    <p><strong>9. Jogorvoslati lehetőség</strong><br>
+                    Amennyiben a Vásárló úgy érzi, hogy személyes adatai kezelésével kapcsolatban jogsérelem érte, panaszt tehet a következő hatóságnál:<br>
+                    👉 Nemzeti Adatvédelmi és Információszabadság Hatóság (NAIH)</p>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
         (function() {
@@ -512,12 +677,14 @@
                     var shippingEl = document.getElementById('orderShippingAddress');
                     var billingEl = document.getElementById('orderBillingAddress');
                     var noteEl = document.getElementById('orderNote');
+                    var paymentEl = document.getElementById('orderPaymentMethod');
 
                     var name = nameEl ? nameEl.value.trim() : '';
                     var phone = phoneEl ? phoneEl.value.trim() : '';
                     var shippingAddress = shippingEl ? shippingEl.value.trim() : '';
                     var billingAddress = billingEl ? billingEl.value.trim() : '';
                     var note = noteEl ? noteEl.value.trim() : '';
+                    var paymentMethod = paymentEl ? paymentEl.value : 'cod';
 
                     if (!name || !phone || !shippingAddress || !billingAddress) {
                         alert('Kérjük, töltsd ki a kötelező mezőket (név, telefon, szállítási és számlázási cím).');
@@ -535,6 +702,7 @@
                         billing_address: billingAddress,
                         items: cart,
                         total_price: total,
+                        payment_method: paymentMethod,
                         note: note
                     };
 
@@ -555,7 +723,8 @@
                         if (!data.success) {
                             throw new Error('Nem sikerült rögzíteni a rendelést.');
                         }
-                        alert('Köszönjük! Rendelésedet utánvéttel rögzítettük. (Rendelés azonosító: #' + data.order_id + ')');
+                        var paymentText = paymentMethod === 'otp' ? 'OTP kártyás' : 'utánvétes';
+                        alert('Köszönjük! Rendelésedet ' + paymentText + ' fizetéssel rögzítettük. (Rendelés azonosító: #' + data.order_id + ')');
                         cart = [];
                         orderForm.reset();
                         updateCartBadge();

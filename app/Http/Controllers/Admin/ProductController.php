@@ -12,6 +12,7 @@ class ProductController extends Controller
     public function index()
     {
         $products = Product::orderByDesc('created_at')->paginate(15);
+
         return view('admin.products.index', compact('products'));
     }
 
@@ -25,20 +26,24 @@ class ProductController extends Controller
         $validated = $request->validate([
             'image' => ['nullable', 'image', 'max:2048'],
             'title' => ['required', 'string', 'max:255'],
+            'category' => ['required', 'in:gyogyteak,illoolajok,kozmetikumok'],
             'intro' => ['required', 'string', 'max:255'],
             'moreinfo' => ['nullable', 'string'],
             'ar' => ['required', 'integer', 'min:0'],
             'kedv' => ['required', 'integer'],
             'public' => ['boolean'],
+            'tomain' => ['boolean'],
         ]);
 
         $validated['public'] = $request->boolean('public');
+        $validated['tomain'] = $request->boolean('tomain');
 
         if ($request->hasFile('image')) {
             $validated['image'] = $request->file('image')->store('products', 'public');
         }
 
         Product::create($validated);
+
         return redirect()->route('admin.products.index')->with('success', 'Termék létrehozva.');
     }
 
@@ -52,14 +57,17 @@ class ProductController extends Controller
         $validated = $request->validate([
             'image' => ['nullable', 'image', 'max:2048'],
             'title' => ['required', 'string', 'max:255'],
+            'category' => ['required', 'in:gyogyteak,illoolajok,kozmetikumok'],
             'intro' => ['required', 'string', 'max:255'],
             'moreinfo' => ['nullable', 'string'],
             'ar' => ['required', 'integer', 'min:0'],
             'kedv' => ['required', 'integer'],
             'public' => ['boolean'],
+            'tomain' => ['boolean'],
         ]);
 
         $validated['public'] = $request->boolean('public');
+        $validated['tomain'] = $request->boolean('tomain');
 
         if ($request->hasFile('image')) {
             if ($product->image) {
@@ -69,6 +77,7 @@ class ProductController extends Controller
         }
 
         $product->update($validated);
+
         return redirect()->route('admin.products.index')->with('success', 'Termék frissítve.');
     }
 
@@ -78,6 +87,7 @@ class ProductController extends Controller
             Storage::disk('public')->delete($product->image);
         }
         $product->delete();
+
         return redirect()->route('admin.products.index')->with('success', 'Termék törölve.');
     }
 }

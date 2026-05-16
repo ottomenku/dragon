@@ -44,6 +44,44 @@
                     <input type="number" id="total_price" name="total_price" value="{{ old('total_price', $order->total_price) }}" min="0" class="w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
                     @error('total_price') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="payment_method">Fizetési mód</label>
+                    <select id="payment_method" name="payment_method" class="w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="cod" {{ old('payment_method', $order->payment_method) === 'cod' ? 'selected' : '' }}>Utánvét</option>
+                        <option value="otp" {{ old('payment_method', $order->payment_method) === 'otp' ? 'selected' : '' }}>OTP kártya</option>
+                        <option value="barion" {{ old('payment_method', $order->payment_method) === 'barion' ? 'selected' : '' }}>Barion kártya</option>
+                    </select>
+                    @error('payment_method') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
+                @if($order->payment_method === 'barion')
+                    <div class="rounded-lg bg-stone-50 border border-stone-200 p-3 text-sm text-gray-700 space-y-1">
+                        <p><span class="font-medium">Barion PaymentId:</span> {{ $order->barion_payment_id ?: '—' }}</p>
+                        <p><span class="font-medium">Fizetés állapota:</span> {{ $order->payment_status ?: '—' }}</p>
+                        <p>
+                            <button type="button" class="btn-order-transactions text-emerald-700 hover:text-emerald-900 font-medium underline" data-order-id="{{ $order->id }}">
+                                Tranzakciók megtekintése
+                            </button>
+                        </p>
+                    </div>
+                @endif
+                <div>
+                    <span class="block text-sm font-medium text-gray-700 mb-2">Fizetve</span>
+                    <div class="space-y-2">
+                        @foreach(\App\Models\Order::fizetveOptions() as $value => $label)
+                            <label class="flex items-center gap-2 text-sm text-gray-800 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="fizetve"
+                                    value="{{ $value }}"
+                                    class="rounded-full border-gray-300 text-emerald-600 focus:ring-emerald-500"
+                                    {{ old('fizetve', $order->fizetve ?? '') === (string) $value ? 'checked' : '' }}
+                                >
+                                {{ $label }}
+                            </label>
+                        @endforeach
+                    </div>
+                    @error('fizetve') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
                 <div class="flex items-center gap-2">
                     <input type="checkbox" id="shipped" name="shipped" value="1" class="rounded border-gray-300 text-emerald-600 focus:ring-emerald-500" {{ old('shipped', $order->shipped) ? 'checked' : '' }}>
                     <label for="shipped" class="text-sm font-medium text-gray-700">Kiküldve</label>
@@ -94,5 +132,7 @@
             </button>
         </div>
     </form>
+
+    @include('admin.orders._transactions_modal')
 @endsection
 
