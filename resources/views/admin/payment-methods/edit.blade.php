@@ -24,7 +24,6 @@
                 ];
             @endphp
             <div class="flex items-start gap-3">
-                <input type="hidden" name="{{ $column }}" value="0">
                 <input
                     type="checkbox"
                     id="{{ $column }}"

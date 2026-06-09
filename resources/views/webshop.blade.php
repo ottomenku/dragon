@@ -187,7 +187,11 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6 text-md-end">
-                                    <div class="text-sm text-gray-600">Fizetendő végösszeg:</div>
+                                    <div class="text-sm text-gray-600">Termékek összesen:</div>
+                                    <div class="mb-1" id="checkout-subtotal">0 Ft</div>
+                                    <div class="text-sm text-gray-600">Szállítási díj:</div>
+                                    <div class="mb-1" id="checkout-shipping-fee">0 Ft</div>
+                                    <div class="text-sm text-gray-600 fw-semibold">Fizetendő végösszeg:</div>
                                     <div class="h5 mb-0" id="checkout-total">0 Ft</div>
                                 </div>
 
@@ -221,15 +225,62 @@
         </div>
     </div>
 
+    <div class="modal fade" id="termsAcceptModal" tabindex="-1" aria-labelledby="termsAcceptModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display" id="termsAcceptModalLabel">ÁSZF és szállítási feltételek elfogadása</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body">
+                    <p class="text-gray-600 mb-3">A rendelés leadása előtt kérjük, olvassa el és fogadja el az Általános Szerződési Feltételeket és a szállítási feltételeket.</p>
+                    <ul class="nav nav-tabs mb-3" id="termsTab" role="tablist">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active" id="terms-aszf-tab" data-bs-toggle="tab" data-bs-target="#terms-aszf-pane" type="button" role="tab">ÁSZF</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="terms-shipping-tab" data-bs-toggle="tab" data-bs-target="#terms-shipping-pane" type="button" role="tab">Szállítási feltételek</button>
+                        </li>
+                    </ul>
+                    <div class="tab-content border rounded p-3 bg-light" style="max-height: 360px; overflow-y: auto;">
+                        <div class="tab-pane fade show active text-gray-700 leading-relaxed" id="terms-aszf-pane" role="tabpanel">
+                            {!! $legalDocuments->aszf_content !!}
+                        </div>
+                        <div class="tab-pane fade text-gray-700 leading-relaxed" id="terms-shipping-pane" role="tabpanel">
+                            {!! $legalDocuments->shipping_terms_content !!}
+                        </div>
+                    </div>
+                    <div class="mt-4 space-y-2">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="acceptAszfCheckbox">
+                            <label class="form-check-label" for="acceptAszfCheckbox">Elolvastam és elfogadom az Általános Szerződési Feltételeket (ÁSZF).</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="acceptShippingCheckbox">
+                            <label class="form-check-label" for="acceptShippingCheckbox">Elolvastam és elfogadom a szállítási feltételeket.</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Mégse</button>
+                    <button type="button" class="btn btn-success" id="btn-confirm-terms">Elfogadom és rendelés leadása</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         (function () {
             var CART_STORAGE_KEY = 'triem_webshop_cart';
+            var TERMS_STORAGE_KEY = 'triem_legal_accepted';
             var cart = [];
             var persistTimer = null;
             var pickupSearchTimer = null;
             var currencyFormatter = new Intl.NumberFormat('hu-HU');
             var carriersWithPickup = @json($carriersWithPickup);
+            var shippingFees = @json($shippingFees);
             var pickupPointsCache = {};
+            var pendingOrderSubmit = false;
 
             function loadCart() {
                 try {
@@ -265,12 +316,53 @@
                 badge.style.visibility = count > 0 ? 'visible' : 'hidden';
             }
 
+            function getItemsTotal() {
+                return cart.reduce(function (sum, item) { return sum + (item.price * item.qty); }, 0);
+            }
+
+            function getSelectedShippingFee() {
+                var el = document.getElementById('orderShippingMethod');
+                if (!el || !el.value) return 0;
+                return parseInt(shippingFees[el.value], 10) || 0;
+            }
+
+            function getGrandTotal() {
+                return getItemsTotal() + getSelectedShippingFee();
+            }
+
+            function hasAcceptedTerms() {
+                try {
+                    return localStorage.getItem(TERMS_STORAGE_KEY) === '1';
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            function saveTermsAccepted() {
+                try {
+                    localStorage.setItem(TERMS_STORAGE_KEY, '1');
+                } catch (e) {
+                    // ignore
+                }
+            }
+
+            function updateCheckoutTotals() {
+                var subtotalEl = document.getElementById('checkout-subtotal');
+                var shippingFeeEl = document.getElementById('checkout-shipping-fee');
+                var checkoutTotalEl = document.getElementById('checkout-total');
+                var itemsTotal = getItemsTotal();
+                var shippingFee = getSelectedShippingFee();
+
+                if (subtotalEl) subtotalEl.textContent = formatPrice(itemsTotal);
+                if (shippingFeeEl) shippingFeeEl.textContent = formatPrice(shippingFee);
+                if (checkoutTotalEl) checkoutTotalEl.textContent = formatPrice(itemsTotal + shippingFee);
+            }
+
             function renderCart() {
                 var emptyEl = document.getElementById('cart-empty');
                 var contentEl = document.getElementById('cart-content');
                 var tbody = document.getElementById('cart-items-body');
                 var totalEl = document.getElementById('cart-total');
-                var checkoutTotalEl = document.getElementById('checkout-total');
                 if (!emptyEl || !contentEl || !tbody || !totalEl) return;
 
                 if (cart.length === 0) {
@@ -307,9 +399,7 @@
                 tbody.innerHTML = rowsHtml;
 
                 totalEl.textContent = formatPrice(total);
-                if (checkoutTotalEl) {
-                    checkoutTotalEl.textContent = formatPrice(total);
-                }
+                updateCheckoutTotals();
             }
 
             function addToCart(product) {
@@ -595,6 +685,7 @@
                     showCheckoutStep();
                     syncBillingVisibility();
                     syncDeliveryVisibility();
+                    updateCheckoutTotals();
                     loadPickupPoints('');
                 });
             }
@@ -624,6 +715,7 @@
                     }
                     pickupPointsCache = {};
                     syncDeliveryVisibility();
+                    updateCheckoutTotals();
                     if (selectedDeliveryType() === 'pickup') {
                         loadPickupPoints('');
                     }
@@ -651,108 +743,174 @@
                 });
             }
 
+            function submitOrderRequest() {
+                var paymentEl = document.getElementById('orderPaymentMethod');
+                var shippingMethodElLocal = document.getElementById('orderShippingMethod');
+                var deliveryType = selectedDeliveryType();
+                var shippingAddress = '';
+                var pickupPointExternalId = null;
+                var pickupPointName = null;
+                var pickupPointAddress = null;
+
+                if (deliveryType === 'home') {
+                    shippingAddress = document.getElementById('orderShippingAddress').value.trim();
+                } else {
+                    var selectedOption = pickupPointSelect.options[pickupPointSelect.selectedIndex];
+                    pickupPointExternalId = pickupPointSelect.value;
+                    pickupPointName = selectedOption.dataset.name || selectedOption.textContent;
+                    pickupPointAddress = selectedOption.dataset.address || '';
+                }
+
+                var billingAddress = (sameBillingAddressCheckbox && sameBillingAddressCheckbox.checked && deliveryType === 'home')
+                    ? shippingAddress
+                    : document.getElementById('orderBillingAddress').value.trim();
+
+                fetch('{{ route('orders.store') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: document.getElementById('orderName').value.trim(),
+                        phone: document.getElementById('orderPhone').value.trim(),
+                        shipping_address: shippingAddress,
+                        billing_address: billingAddress,
+                        items: cart,
+                        total_price: getGrandTotal(),
+                        terms_accepted: true,
+                        payment_method: paymentEl.value,
+                        shipping_method: shippingMethodElLocal.value,
+                        delivery_type: deliveryType,
+                        pickup_point_external_id: pickupPointExternalId,
+                        pickup_point_name: pickupPointName,
+                        pickup_point_address: pickupPointAddress
+                    })
+                }).then(function (response) {
+                    return response.json().then(function (data) {
+                        return { ok: response.ok, status: response.status, data: data };
+                    });
+                }).then(function (result) {
+                    if (!result.ok) {
+                        var msg = (result.data && result.data.message) ? result.data.message : 'Mentési hiba';
+                        if (result.data && result.data.errors) {
+                            var firstError = Object.values(result.data.errors)[0];
+                            if (Array.isArray(firstError) && firstError[0]) {
+                                msg = firstError[0];
+                            }
+                        }
+                        alert(msg);
+                        return;
+                    }
+                    var data = result.data;
+                    if (data.redirect_url) {
+                        window.location.href = data.redirect_url;
+                        return;
+                    }
+                    alert('Rendelés rögzítve. Azonosító: #' + data.order_id);
+                    cart = [];
+                    saveCart();
+                    orderForm.reset();
+                    updateCartBadge();
+                    renderCart();
+                    showCartStep();
+                    var cartModalEl = document.getElementById('cartModal');
+                    var modalInstance = cartModalEl ? bootstrap.Modal.getInstance(cartModalEl) : null;
+                    if (modalInstance) modalInstance.hide();
+                }).catch(function () {
+                    alert('Hiba történt a rendelés mentése közben.');
+                });
+            }
+
+            function validateOrderForm() {
+                if (cart.length === 0) {
+                    alert('A kosár üres.');
+                    return false;
+                }
+                var paymentEl = document.getElementById('orderPaymentMethod');
+                if (!paymentEl) {
+                    alert('Jelenleg nem érhető el fizetési mód.');
+                    return false;
+                }
+                var shippingMethodElLocal = document.getElementById('orderShippingMethod');
+                if (!shippingMethodElLocal) {
+                    alert('Jelenleg nem érhető el szállítási mód.');
+                    return false;
+                }
+
+                var deliveryType = selectedDeliveryType();
+                if (deliveryType === 'home') {
+                    var shippingAddress = document.getElementById('orderShippingAddress').value.trim();
+                    if (!shippingAddress) {
+                        alert('Kérjük, adja meg a szállítási címet.');
+                        return false;
+                    }
+                } else if (!pickupPointSelect || !pickupPointSelect.value) {
+                    alert('Kérjük, válasszon átvételi pontot.');
+                    return false;
+                }
+
+                var billingAddress = (sameBillingAddressCheckbox && sameBillingAddressCheckbox.checked && deliveryType === 'home')
+                    ? (document.getElementById('orderShippingAddress').value.trim())
+                    : document.getElementById('orderBillingAddress').value.trim();
+                if (!billingAddress) {
+                    alert('Kérjük, adja meg a számlázási címet.');
+                    return false;
+                }
+
+                return true;
+            }
+
+            function showTermsModal() {
+                var termsModal = document.getElementById('termsAcceptModal');
+                if (termsModal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                    bootstrap.Modal.getOrCreateInstance(termsModal).show();
+                } else {
+                    alert('Kérjük, fogadja el az ÁSZF-et és a szállítási feltételeket a rendelés leadásához.');
+                }
+            }
+
             if (orderForm) {
                 orderForm.addEventListener('submit', function (event) {
                     event.preventDefault();
-                    if (cart.length === 0) {
-                        alert('A kosár üres.');
+                    if (!validateOrderForm()) {
                         return;
                     }
-                    var paymentEl = document.getElementById('orderPaymentMethod');
-                    if (!paymentEl) {
-                        alert('Jelenleg nem érhető el fizetési mód.');
+                    if (!hasAcceptedTerms()) {
+                        pendingOrderSubmit = true;
+                        showTermsModal();
                         return;
                     }
-                    var shippingMethodEl = document.getElementById('orderShippingMethod');
-                    if (!shippingMethodEl) {
-                        alert('Jelenleg nem érhető el szállítási mód.');
-                        return;
-                    }
+                    submitOrderRequest();
+                });
+            }
 
-                    var deliveryType = selectedDeliveryType();
-                    var shippingAddress = '';
-                    var pickupPointExternalId = null;
-                    var pickupPointName = null;
-                    var pickupPointAddress = null;
+            var btnConfirmTerms = document.getElementById('btn-confirm-terms');
+            var acceptAszfCheckbox = document.getElementById('acceptAszfCheckbox');
+            var acceptShippingCheckbox = document.getElementById('acceptShippingCheckbox');
+            var termsAcceptModal = document.getElementById('termsAcceptModal');
 
-                    if (deliveryType === 'home') {
-                        shippingAddress = document.getElementById('orderShippingAddress').value.trim();
-                        if (!shippingAddress) {
-                            alert('Kérjük, adja meg a szállítási címet.');
-                            return;
-                        }
-                    } else {
-                        if (!pickupPointSelect || !pickupPointSelect.value) {
-                            alert('Kérjük, válasszon átvételi pontot.');
-                            return;
-                        }
-                        var selectedOption = pickupPointSelect.options[pickupPointSelect.selectedIndex];
-                        pickupPointExternalId = pickupPointSelect.value;
-                        pickupPointName = selectedOption.dataset.name || selectedOption.textContent;
-                        pickupPointAddress = selectedOption.dataset.address || '';
-                    }
-
-                    var billingAddress = (sameBillingAddressCheckbox && sameBillingAddressCheckbox.checked && deliveryType === 'home')
-                        ? shippingAddress
-                        : document.getElementById('orderBillingAddress').value.trim();
-                    if (!billingAddress) {
-                        alert('Kérjük, adja meg a számlázási címet.');
+            if (btnConfirmTerms) {
+                btnConfirmTerms.addEventListener('click', function () {
+                    if (!acceptAszfCheckbox || !acceptAszfCheckbox.checked || !acceptShippingCheckbox || !acceptShippingCheckbox.checked) {
+                        alert('Kérjük, jelölje be mindkét elfogadást a rendelés leadásához.');
                         return;
                     }
-                    if (!shippingMethodEl) {
-                        alert('Jelenleg nem érhető el szállítási mód.');
-                        return;
+                    saveTermsAccepted();
+                    if (termsAcceptModal && typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+                        bootstrap.Modal.getOrCreateInstance(termsAcceptModal).hide();
                     }
+                    if (pendingOrderSubmit) {
+                        pendingOrderSubmit = false;
+                        submitOrderRequest();
+                    }
+                });
+            }
 
-                    var total = cart.reduce(function (sum, item) { return sum + (item.price * item.qty); }, 0);
-                    fetch('{{ route('orders.store') }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            name: document.getElementById('orderName').value.trim(),
-                            phone: document.getElementById('orderPhone').value.trim(),
-                            shipping_address: shippingAddress,
-                            billing_address: billingAddress,
-                            items: cart,
-                            total_price: total,
-                            payment_method: paymentEl.value,
-                            shipping_method: shippingMethodEl.value,
-                            delivery_type: deliveryType,
-                            pickup_point_external_id: pickupPointExternalId,
-                            pickup_point_name: pickupPointName,
-                            pickup_point_address: pickupPointAddress
-                        })
-                    }).then(function (response) {
-                        return response.json().then(function (data) {
-                            return { ok: response.ok, status: response.status, data: data };
-                        });
-                    }).then(function (result) {
-                        if (!result.ok) {
-                            var msg = (result.data && result.data.message) ? result.data.message : 'Mentési hiba';
-                            alert(msg);
-                            return;
-                        }
-                        var data = result.data;
-                        if (data.redirect_url) {
-                            window.location.href = data.redirect_url;
-                            return;
-                        }
-                        alert('Rendelés rögzítve. Azonosító: #' + data.order_id);
-                        cart = [];
-                        saveCart();
-                        orderForm.reset();
-                        updateCartBadge();
-                        renderCart();
-                        var cartModalEl = document.getElementById('cartModal');
-                        var modalInstance = cartModalEl ? bootstrap.Modal.getInstance(cartModalEl) : null;
-                        if (modalInstance) modalInstance.hide();
-                    }).catch(function () {
-                        alert('Hiba történt a rendelés mentése közben.');
-                    });
+            if (termsAcceptModal) {
+                termsAcceptModal.addEventListener('hidden.bs.modal', function () {
+                    pendingOrderSubmit = false;
                 });
             }
 

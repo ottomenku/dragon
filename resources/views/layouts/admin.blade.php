@@ -21,6 +21,7 @@
                 <a href="{{ route('admin.webshop.edit') }}" class="text-emerald-100 hover:text-white text-sm">Webshop</a>
                 <a href="{{ route('admin.payment-methods.edit') }}" class="text-emerald-100 hover:text-white text-sm">Fizetési módok</a>
                 <a href="{{ route('admin.shipping-methods.edit') }}" class="text-emerald-100 hover:text-white text-sm">Szállítási módok</a>
+                <a href="{{ route('admin.legal-documents.edit') }}" class="text-emerald-100 hover:text-white text-sm">ÁSZF / Szállítás</a>
                 <a href="{{ url('/') }}" class="text-emerald-200 hover:text-white text-sm">Főoldal</a>
             </div>
             <span class="text-emerald-200 text-sm">{{ auth()->user()->name }}</span>
@@ -29,6 +30,15 @@
     <main class="max-w-5xl mx-auto px-4 py-6">
         @if (session('success'))
             <div class="mb-4 p-3 bg-emerald-100 border border-emerald-300 rounded-lg text-emerald-800">{{ session('success') }}</div>
+        @endif
+        @if ($errors->any())
+            <div class="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-800">
+                <ul class="list-disc list-inside space-y-1">
+                    @foreach ($errors->all() as $error)
+                        <li>{{ $error }}</li>
+                    @endforeach
+                </ul>
+            </div>
         @endif
         @yield('content')
     </main>

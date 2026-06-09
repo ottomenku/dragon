@@ -44,6 +44,7 @@ class OrderController extends Controller
             'items.*.price' => ['required', 'integer', 'min:0'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
             'total_price' => ['required', 'integer', 'min:0'],
+            'terms_accepted' => ['required', 'accepted'],
             'payment_method' => ['required', 'in:'.implode(',', $enabledPaymentMethods)],
             'shipping_method' => ['required', 'in:'.implode(',', $enabledShippingMethods)],
             'delivery_type' => ['required', 'in:home,pickup'],
@@ -72,13 +73,27 @@ class OrderController extends Controller
             $data['shipping_address'] = $pickupPoint->displayLabel();
         }
 
+        $itemsTotal = collect($data['items'])->sum(
+            fn (array $item): int => ((int) $item['price']) * ((int) $item['qty'])
+        );
+        $shippingFee = ShippingMethodSetting::current()->feeFor($data['shipping_method']);
+        $expectedTotal = $itemsTotal + $shippingFee;
+
+        if ((int) $data['total_price'] !== $expectedTotal) {
+            return response()->json([
+                'success' => false,
+                'message' => 'A végösszeg nem egyezik (termékek + szállítási díj). Kérjük, frissítse az oldalt és próbálja újra.',
+            ], 422);
+        }
+
         $order = Order::create([
             'name' => $data['name'],
             'phone' => $data['phone'],
             'shipping_address' => $data['shipping_address'],
             'billing_address' => $data['billing_address'],
             'items' => $data['items'],
-            'total_price' => $data['total_price'],
+            'total_price' => $expectedTotal,
+            'shipping_fee' => $shippingFee,
             'payment_method' => $data['payment_method'],
             'shipping_method' => $data['shipping_method'],
             'delivery_type' => $data['delivery_type'],

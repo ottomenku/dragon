@@ -20,6 +20,9 @@
                 <p><span class="font-medium">Szállítási cím:</span><br>{{ $order->shipping_address }}</p>
             @endif
             <p><span class="font-medium">Szállítási mód:</span> {{ $order->shippingMethodLabel() }}</p>
+            @if($order->shipping_fee > 0)
+                <p><span class="font-medium">Szállítási díj:</span> {{ number_format($order->shipping_fee) }} Ft</p>
+            @endif
             <p><span class="font-medium">Számlázási cím:</span><br>{{ $order->billing_address }}</p>
         </div>
         <div class="bg-white rounded-xl shadow border border-gray-200 p-4 space-y-2">

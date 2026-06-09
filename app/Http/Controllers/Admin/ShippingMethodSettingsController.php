@@ -23,20 +23,22 @@ class ShippingMethodSettingsController extends Controller
 
     public function update(Request $request)
     {
-        $request->validate([
-            'mpl_enabled' => ['sometimes', 'boolean'],
-            'foxpost_enabled' => ['sometimes', 'boolean'],
-            'dhl_enabled' => ['sometimes', 'boolean'],
-            'gls_enabled' => ['sometimes', 'boolean'],
-            'packeta_enabled' => ['sometimes', 'boolean'],
-        ]);
+        $rules = [];
+        foreach (ShippingMethodSetting::METHODS as $key => $label) {
+            $rules[$key.'_fee'] = ['nullable', 'integer', 'min:0', 'max:9999999'];
+        }
+
+        $request->validate($rules);
 
         $settings = ShippingMethodSetting::current();
-        $settings->mpl_enabled = $request->boolean('mpl_enabled');
-        $settings->foxpost_enabled = $request->boolean('foxpost_enabled');
-        $settings->dhl_enabled = $request->boolean('dhl_enabled');
-        $settings->gls_enabled = $request->boolean('gls_enabled');
-        $settings->packeta_enabled = $request->boolean('packeta_enabled');
+
+        foreach (ShippingMethodSetting::METHODS as $key => $label) {
+            $enabledColumn = $key.'_enabled';
+            $feeColumn = $key.'_fee';
+            $settings->{$enabledColumn} = $this->checkboxEnabled($request, $enabledColumn);
+            $settings->{$feeColumn} = max(0, (int) $request->input($feeColumn, 0));
+        }
+
         $settings->save();
 
         if ($settings->enabledMethods() === []) {
@@ -47,7 +49,7 @@ class ShippingMethodSettingsController extends Controller
 
         return redirect()
             ->route('admin.shipping-methods.edit')
-            ->with('success', 'A szállítási módok beállításai mentve.');
+            ->with('success', 'A szállítási módok és díjak mentve.');
     }
 
     public function syncPickupPoints(PickupPointSyncService $syncService)
@@ -60,5 +62,20 @@ class ShippingMethodSettingsController extends Controller
         return redirect()
             ->route('admin.shipping-methods.edit')
             ->with('success', 'Átvételi pontok frissítve – '.$summary.'.');
+    }
+
+    private function checkboxEnabled(Request $request, string $key): bool
+    {
+        if (! $request->has($key)) {
+            return false;
+        }
+
+        $value = $request->input($key);
+
+        if (is_array($value)) {
+            $value = end($value);
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 }

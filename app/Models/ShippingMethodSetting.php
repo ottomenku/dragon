@@ -20,6 +20,11 @@ class ShippingMethodSetting extends Model
         'dhl_enabled',
         'gls_enabled',
         'packeta_enabled',
+        'mpl_fee',
+        'foxpost_fee',
+        'dhl_fee',
+        'gls_fee',
+        'packeta_fee',
     ];
 
     protected $casts = [
@@ -28,6 +33,11 @@ class ShippingMethodSetting extends Model
         'dhl_enabled' => 'boolean',
         'gls_enabled' => 'boolean',
         'packeta_enabled' => 'boolean',
+        'mpl_fee' => 'integer',
+        'foxpost_fee' => 'integer',
+        'dhl_fee' => 'integer',
+        'gls_fee' => 'integer',
+        'packeta_fee' => 'integer',
     ];
 
     public static function current(): self
@@ -65,5 +75,24 @@ class ShippingMethodSetting extends Model
     public static function isEnabled(string $method): bool
     {
         return in_array($method, static::enabledMethodKeys(), true);
+    }
+
+    public function feeFor(string $method): int
+    {
+        $column = $method.'_fee';
+
+        return (int) ($this->{$column} ?? 0);
+    }
+
+    /** @return array<string, int> */
+    public function feesMap(): array
+    {
+        $fees = [];
+
+        foreach (self::METHODS as $key => $label) {
+            $fees[$key] = $this->feeFor($key);
+        }
+
+        return $fees;
     }
 }

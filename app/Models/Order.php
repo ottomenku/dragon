@@ -29,6 +29,7 @@ class Order extends Model
         'billing_address',
         'items',
         'total_price',
+        'shipping_fee',
         'payment_method',
         'shipping_method',
         'delivery_type',

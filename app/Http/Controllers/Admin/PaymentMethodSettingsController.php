@@ -17,16 +17,10 @@ class PaymentMethodSettingsController extends Controller
 
     public function update(Request $request)
     {
-        $request->validate([
-            'cod_enabled' => ['sometimes', 'boolean'],
-            'otp_enabled' => ['sometimes', 'boolean'],
-            'barion_enabled' => ['sometimes', 'boolean'],
-        ]);
-
         $settings = PaymentMethodSetting::current();
-        $settings->cod_enabled = $request->boolean('cod_enabled');
-        $settings->otp_enabled = $request->boolean('otp_enabled');
-        $settings->barion_enabled = $request->boolean('barion_enabled');
+        $settings->cod_enabled = $this->checkboxEnabled($request, 'cod_enabled');
+        $settings->otp_enabled = $this->checkboxEnabled($request, 'otp_enabled');
+        $settings->barion_enabled = $this->checkboxEnabled($request, 'barion_enabled');
         $settings->save();
 
         if ($settings->enabledMethods() === []) {
@@ -38,5 +32,20 @@ class PaymentMethodSettingsController extends Controller
         return redirect()
             ->route('admin.payment-methods.edit')
             ->with('success', 'A fizetési módok beállításai mentve.');
+    }
+
+    private function checkboxEnabled(Request $request, string $key): bool
+    {
+        if (! $request->has($key)) {
+            return false;
+        }
+
+        $value = $request->input($key);
+
+        if (is_array($value)) {
+            $value = end($value);
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN);
     }
 }

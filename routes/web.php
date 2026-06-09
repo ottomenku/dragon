@@ -1,11 +1,13 @@
 <?php
 
+use App\Http\Controllers\Admin\LegalDocumentSettingsController;
 use App\Http\Controllers\Admin\BarionSettingsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\PaymentMethodSettingsController;
 use App\Http\Controllers\Admin\ShippingMethodSettingsController;
 use App\Http\Controllers\Admin\WebshopSettingsController;
+use App\Models\LegalDocumentSetting;
 use App\Models\PaymentMethodSetting;
 use App\Models\ShippingMethodSetting;
 use App\Http\Controllers\Auth\LoginController;
@@ -31,7 +33,9 @@ Route::get('/', function () {
         ->orderBy('title')
         ->get();
 
-    return view('welcome', compact('products'));
+    $legalDocuments = LegalDocumentSetting::current();
+
+    return view('welcome', compact('products', 'legalDocuments'));
 })->name('welcome');
 
 Route::middleware('webshop.open')->group(function () {
@@ -45,9 +49,11 @@ Route::middleware('webshop.open')->group(function () {
 
         $enabledPaymentMethods = PaymentMethodSetting::current()->enabledMethods();
         $enabledShippingMethods = ShippingMethodSetting::current()->enabledMethods();
+        $shippingFees = ShippingMethodSetting::current()->feesMap();
+        $legalDocuments = LegalDocumentSetting::current();
         $carriersWithPickup = PickupPoint::carriersWithPoints();
 
-        return view('webshop', compact('productsByCategory', 'enabledPaymentMethods', 'enabledShippingMethods', 'carriersWithPickup'));
+        return view('webshop', compact('productsByCategory', 'enabledPaymentMethods', 'enabledShippingMethods', 'shippingFees', 'legalDocuments', 'carriersWithPickup'));
     })->name('webshop');
 
     Route::get('/pickup-points', [PickupPointController::class, 'index'])->name('pickup-points.index');
@@ -84,4 +90,6 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('shipping-methods', [ShippingMethodSettingsController::class, 'edit'])->name('shipping-methods.edit');
     Route::put('shipping-methods', [ShippingMethodSettingsController::class, 'update'])->name('shipping-methods.update');
     Route::post('shipping-methods/sync-pickup-points', [ShippingMethodSettingsController::class, 'syncPickupPoints'])->name('shipping-methods.sync-pickup-points');
+    Route::get('legal-documents', [LegalDocumentSettingsController::class, 'edit'])->name('legal-documents.edit');
+    Route::put('legal-documents', [LegalDocumentSettingsController::class, 'update'])->name('legal-documents.update');
 });
