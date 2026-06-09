@@ -2,14 +2,17 @@
 
 use App\Http\Controllers\Admin\LegalDocumentSettingsController;
 use App\Http\Controllers\Admin\BarionSettingsController;
+use App\Http\Controllers\Admin\ContentImageController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
 use App\Http\Controllers\Admin\PaymentMethodSettingsController;
 use App\Http\Controllers\Admin\ShippingMethodSettingsController;
+use App\Http\Controllers\Admin\SiteContentSettingsController;
 use App\Http\Controllers\Admin\WebshopSettingsController;
 use App\Models\LegalDocumentSetting;
 use App\Models\PaymentMethodSetting;
 use App\Models\ShippingMethodSetting;
+use App\Models\SiteContentSetting;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BarionPaymentController;
@@ -34,8 +37,9 @@ Route::get('/', function () {
         ->get();
 
     $legalDocuments = LegalDocumentSetting::current();
+    $siteContent = SiteContentSetting::current();
 
-    return view('welcome', compact('products', 'legalDocuments'));
+    return view('welcome', compact('products', 'legalDocuments', 'siteContent'));
 })->name('welcome');
 
 Route::middleware('webshop.open')->group(function () {
@@ -92,4 +96,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::post('shipping-methods/sync-pickup-points', [ShippingMethodSettingsController::class, 'syncPickupPoints'])->name('shipping-methods.sync-pickup-points');
     Route::get('legal-documents', [LegalDocumentSettingsController::class, 'edit'])->name('legal-documents.edit');
     Route::put('legal-documents', [LegalDocumentSettingsController::class, 'update'])->name('legal-documents.update');
+    Route::get('site-content/contact', [SiteContentSettingsController::class, 'editContact'])->name('site-content.contact.edit');
+    Route::put('site-content/contact', [SiteContentSettingsController::class, 'updateContact'])->name('site-content.contact.update');
+    Route::get('site-content/footer', [SiteContentSettingsController::class, 'editFooter'])->name('site-content.footer.edit');
+    Route::put('site-content/footer', [SiteContentSettingsController::class, 'updateFooter'])->name('site-content.footer.update');
+    Route::post('content-images', [ContentImageController::class, 'store'])->name('content-images.store');
 });

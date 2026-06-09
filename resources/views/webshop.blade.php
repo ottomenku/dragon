@@ -12,6 +12,7 @@
         body { font-family: 'Source Sans 3', sans-serif; }
         .font-display { font-family: 'Cormorant Garamond', serif; }
     </style>
+    @include('partials.barion-pixel')
 </head>
 <body class="bg-stone-50 text-gray-800 antialiased">
     <header class="bg-emerald-900 text-white">
@@ -81,6 +82,13 @@
             </section>
         @endforeach
     </main>
+
+    <footer class="bg-emerald-900 text-emerald-50 py-8 mt-10">
+        <div class="max-w-6xl mx-auto px-4">
+            @include('partials.barion-payment-logos', ['class' => 'max-w-2xl', 'label' => 'Biztonságos online fizetés:', 'labelClass' => 'text-emerald-200'])
+            <p class="mt-6 text-emerald-200/90 text-sm">© {{ date('Y') }} Triem Dragonherbs</p>
+        </div>
+    </footer>
 
     <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
@@ -153,6 +161,8 @@
                                     @else
                                         <p class="text-sm text-amber-700 mb-0">Jelenleg nem érhető el fizetési mód.</p>
                                     @endif
+
+                                    @include('partials.barion-payment-logos', ['class' => 'mt-3'])
 
                                     <label for="orderShippingMethod" class="form-label mb-1 mt-3">Preferált szállítási mód</label>
                                     @if(count($enabledShippingMethods) > 0)
@@ -281,6 +291,29 @@
             var shippingFees = @json($shippingFees);
             var pickupPointsCache = {};
             var pendingOrderSubmit = false;
+            var barionPixelEnabled = @json(\App\Support\BarionBranding::hasPixel());
+
+            function barionTrack(eventName, properties) {
+                if (!barionPixelEnabled || typeof window.bp !== 'function') {
+                    return;
+                }
+                bp('track', eventName, properties);
+            }
+
+            function barionContentsFromCart(items) {
+                return items.map(function (item) {
+                    return {
+                        contentType: 'Product',
+                        currency: 'HUF',
+                        id: String(item.id),
+                        name: item.title,
+                        quantity: item.qty,
+                        totalItemPrice: item.price * item.qty,
+                        unit: 'db',
+                        unitPrice: item.price
+                    };
+                });
+            }
 
             function loadCart() {
                 try {
@@ -409,6 +442,16 @@
                 } else {
                     cart.push({ id: product.id, title: product.title, price: product.price, qty: 1 });
                 }
+                barionTrack('addToCart', {
+                    contents: barionContentsFromCart([{
+                        id: product.id,
+                        title: product.title,
+                        price: product.price,
+                        qty: 1
+                    }]),
+                    currency: 'HUF',
+                    revenue: product.price
+                });
                 saveCart();
                 updateCartBadge();
                 // A teljes kosár render csak akkor kell, ha ténylegesen megnyitjuk a kosarat
@@ -687,6 +730,12 @@
                     syncDeliveryVisibility();
                     updateCheckoutTotals();
                     loadPickupPoints('');
+                    barionTrack('initiateCheckout', {
+                        contents: barionContentsFromCart(cart),
+                        currency: 'HUF',
+                        revenue: getGrandTotal(),
+                        step: 1
+                    });
                 });
             }
 
@@ -808,6 +857,13 @@
                         window.location.href = data.redirect_url;
                         return;
                     }
+                    barionTrack('purchase', {
+                        contents: barionContentsFromCart(cart),
+                        currency: 'HUF',
+                        orderNumber: String(data.order_id),
+                        revenue: getGrandTotal(),
+                        step: 1
+                    });
                     alert('Rendelés rögzítve. Azonosító: #' + data.order_id);
                     cart = [];
                     saveCart();

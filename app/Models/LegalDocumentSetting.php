@@ -9,14 +9,23 @@ class LegalDocumentSetting extends Model
     protected $fillable = [
         'aszf_content',
         'shipping_terms_content',
+        'gdpr_content',
     ];
 
     public static function current(): self
     {
-        return static::query()->firstOrCreate([], [
+        $settings = static::query()->firstOrCreate([], [
             'aszf_content' => static::defaultAszfContent(),
             'shipping_terms_content' => static::defaultShippingTermsContent(),
+            'gdpr_content' => static::defaultGdprContent(),
         ]);
+
+        if ($settings->gdpr_content === null || $settings->gdpr_content === '') {
+            $settings->gdpr_content = static::defaultGdprContent();
+            $settings->save();
+        }
+
+        return $settings;
     }
 
     public static function defaultAszfContent(): string
@@ -90,6 +99,70 @@ Házhozszállítás esetén a futár a megadott címre kézbesít. Csomagpont / 
 Sérült vagy hiányos csomag átvételekor kérjük, jelezze azonnal a futárnál és írjon nekünk a medmo1973@gmail.com címre a rendelés azonosítójával.</p>
 
 <p><em>Ez egy ideiglenes szállítási feltétel-szöveg. Az admin felületen szerkeszthető.</em></p>
+HTML;
+    }
+
+    public static function defaultGdprContent(): string
+    {
+        return <<<'HTML'
+<p><strong>1. Az adatkezelő adatai</strong><br>
+Név: Triem Dragonherbs<br>
+Székhely: 3214 Nagyréde, Kossuth L. utca 17.<br>
+Üzemeltető: Családi gazdaság<br>
+E-mail: medmo1973@gmail.com<br>
+Telefonszám: +36 30 968 9532</p>
+
+<p><strong>2. Az adatkezelés célja</strong><br>
+Az adatkezelés célja:<br>
+a megrendelések teljesítése<br>
+kapcsolattartás a vásárlókkal<br>
+számlázás<br>
+jogszabályi kötelezettségek teljesítése</p>
+
+<p><strong>3. Kezelt személyes adatok köre</strong><br>
+A webshop használata során az alábbi adatok kerülhetnek rögzítésre:<br>
+név<br>
+e-mail cím<br>
+telefonszám<br>
+szállítási cím<br>
+számlázási adatok<br>
+rendelési adatok</p>
+
+<p><strong>4. Az adatkezelés jogalapja</strong><br>
+Az adatkezelés jogalapja:<br>
+a szerződés teljesítése<br>
+jogi kötelezettség teljesítése<br>
+a vásárló hozzájárulása</p>
+
+<p><strong>5. Az adatok tárolásának időtartama</strong><br>
+A személyes adatokat:<br>
+a megrendelés teljesítéséig<br>
+vagy a jogszabályban előírt ideig (pl. számlázás miatt)<br>
+őrizzük meg.</p>
+
+<p><strong>6. Adattovábbítás</strong><br>
+A személyes adatok csak az alábbi esetekben kerülnek továbbításra:<br>
+futárszolgálat részére (szállítás céljából)<br>
+könyvelő részére (számlázás miatt)<br>
+Az adatok harmadik fél számára marketing célra nem kerülnek átadásra.</p>
+
+<p><strong>7. Adatbiztonság</strong><br>
+Az adatokat:<br>
+biztonságosan tároljuk<br>
+illetéktelen hozzáféréstől védjük<br>
+csak az arra jogosult személyek férnek hozzá</p>
+
+<p><strong>8. Az érintettek jogai</strong><br>
+A vásárlót az alábbi jogok illetik meg:<br>
+hozzáférés a saját adataihoz<br>
+adatok helyesbítése<br>
+adatok törlése<br>
+adatkezelés korlátozása<br>
+tiltakozás az adatkezelés ellen</p>
+
+<p><strong>9. Jogorvoslati lehetőség</strong><br>
+Amennyiben a Vásárló úgy érzi, hogy személyes adatai kezelésével kapcsolatban jogsérelem érte, panaszt tehet a következő hatóságnál:<br>
+Nemzeti Adatvédelmi és Információszabadság Hatóság (NAIH)</p>
 HTML;
     }
 }

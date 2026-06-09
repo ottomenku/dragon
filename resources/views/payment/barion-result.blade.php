@@ -8,6 +8,7 @@
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=source-sans-3:400,500,600,700&display=swap" rel="stylesheet" />
     <style> body { font-family: 'Source Sans 3', sans-serif; } </style>
+    @include('partials.barion-pixel')
 </head>
 <body class="antialiased bg-stone-100 min-h-screen flex items-center justify-center p-4">
     <div class="max-w-md w-full bg-white rounded-xl shadow border border-stone-200 p-8 text-center">
@@ -36,6 +37,14 @@
             <h1 class="text-xl font-semibold text-gray-900 mb-2">Ismeretlen állapot</h1>
             <p class="text-gray-600 text-sm">{{ $message ?? 'Nem sikerült azonosítani a fizetést.' }}</p>
         @endif
+
+        @if(($state ?? '') === 'success' && ($order ?? null))
+            @include('partials.barion-pixel-purchase', ['order' => $order])
+        @endif
+
+        <div class="mt-6">
+            @include('partials.barion-payment-logos', ['class' => 'text-left'])
+        </div>
 
         <div class="mt-8">
             @if($webshopLinkVisible ?? false)

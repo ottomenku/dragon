@@ -10,7 +10,8 @@
 (function () {
     var editors = [
         { editorId: 'aszf-editor', textareaId: 'aszf_content' },
-        { editorId: 'shipping-terms-editor', textareaId: 'shipping_terms_content' }
+        { editorId: 'shipping-terms-editor', textareaId: 'shipping_terms_content' },
+        { editorId: 'gdpr-editor', textareaId: 'gdpr_content' }
     ];
 
     document.addEventListener('DOMContentLoaded', function () {

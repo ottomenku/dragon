@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', 'ÁSZF és szállítási feltételek')
+@section('title', 'ÁSZF, szállítás és adatkezelés')
 
 @section('content')
     <div class="mb-6">
-        <h1 class="text-2xl font-semibold text-gray-800">ÁSZF és szállítási feltételek</h1>
+        <h1 class="text-2xl font-semibold text-gray-800">ÁSZF, szállítási feltételek és adatkezelés</h1>
         <p class="text-gray-500 text-sm mt-1">
-            Ezek a szövegek jelennek meg a webshop rendelési felugró ablakában és a nyitóoldalon. A vásárlónak a rendelés leadása előtt el kell fogadnia mindkettőt.
+            Ezek a szövegek jelennek meg a webshop rendelési felugró ablakában és a nyitóoldalon. A vásárlónak a rendelés leadása előtt el kell fogadnia az ÁSZF-et és a szállítási feltételeket.
         </p>
     </div>
 
@@ -28,6 +28,15 @@
             <div id="shipping-terms-editor" class="bg-white"></div>
             <textarea id="shipping_terms_content" name="shipping_terms_content" class="hidden">{{ old('shipping_terms_content', $settings->shipping_terms_content) }}</textarea>
             @error('shipping_terms_content')
+                <p class="text-sm text-red-600">{{ $message }}</p>
+            @enderror
+        </div>
+
+        <div class="bg-white rounded-xl shadow border border-gray-200 p-6 space-y-3">
+            <label for="gdpr_content" class="block text-sm font-semibold text-gray-800">Adatkezelési tájékoztató (GDPR)</label>
+            <div id="gdpr-editor" class="bg-white"></div>
+            <textarea id="gdpr_content" name="gdpr_content" class="hidden">{{ old('gdpr_content', $settings->gdpr_content) }}</textarea>
+            @error('gdpr_content')
                 <p class="text-sm text-red-600">{{ $message }}</p>
             @enderror
         </div>

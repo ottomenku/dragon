@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\LegalDocumentSetting;
+use App\Models\SiteContentSetting;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
@@ -49,9 +50,15 @@ class RestoreDragonDatabase extends Command
         LegalDocumentSetting::query()->firstOrCreate([], [
             'aszf_content' => LegalDocumentSetting::defaultAszfContent(),
             'shipping_terms_content' => LegalDocumentSetting::defaultShippingTermsContent(),
+            'gdpr_content' => LegalDocumentSetting::defaultGdprContent(),
         ]);
 
-        $this->info('ÁSZF és szállítási feltételek alapértelmezett szövegei létrehozva (ha még nem volt).');
+        SiteContentSetting::query()->firstOrCreate([], [
+            'contact_content' => SiteContentSetting::defaultContactContent(),
+            'footer_content' => SiteContentSetting::defaultFooterContent(),
+        ]);
+
+        $this->info('ÁSZF, szállítási feltételek, GDPR és oldaltartalmak alapértelmezett szövegei létrehozva (ha még nem volt).');
 
         $counts = [
             'users' => DB::table('users')->count(),

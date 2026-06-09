@@ -14,14 +14,9 @@
 <body class="antialiased bg-stone-100 min-h-screen">
     <header class="bg-emerald-800 text-white shadow">
         <div class="max-w-5xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-            <div class="flex items-center gap-4">
+            <div class="flex items-center gap-4 flex-wrap">
                 <a href="{{ route('admin.products.index') }}" class="font-semibold">Admin – Termékek</a>
-                <a href="{{ route('admin.orders.index') }}" class="text-emerald-100 hover:text-white text-sm">Megrendelések</a>
-                <a href="{{ route('admin.barion.edit') }}" class="text-emerald-100 hover:text-white text-sm">Barion</a>
-                <a href="{{ route('admin.webshop.edit') }}" class="text-emerald-100 hover:text-white text-sm">Webshop</a>
-                <a href="{{ route('admin.payment-methods.edit') }}" class="text-emerald-100 hover:text-white text-sm">Fizetési módok</a>
-                <a href="{{ route('admin.shipping-methods.edit') }}" class="text-emerald-100 hover:text-white text-sm">Szállítási módok</a>
-                <a href="{{ route('admin.legal-documents.edit') }}" class="text-emerald-100 hover:text-white text-sm">ÁSZF / Szállítás</a>
+                @include('partials.admin-menu-links')
                 <a href="{{ url('/') }}" class="text-emerald-200 hover:text-white text-sm">Főoldal</a>
             </div>
             <span class="text-emerald-200 text-sm">{{ auth()->user()->name }}</span>

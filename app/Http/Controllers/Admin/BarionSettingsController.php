@@ -30,11 +30,13 @@ class BarionSettingsController extends Controller
                 'max:512',
             ],
             'use_test' => ['sometimes', 'boolean'],
+            'pixel_id' => ['nullable', 'string', 'max:32', 'regex:/^BP-[A-Z0-9]+-\d{2}$/i'],
         ]);
 
         $row = $existing ?? new BarionSetting;
         $row->payee = $validated['payee'];
         $row->use_test = $request->boolean('use_test');
+        $row->pixel_id = filled($validated['pixel_id'] ?? null) ? strtoupper(trim($validated['pixel_id'])) : null;
 
         if (! empty($validated['pos_key'])) {
             $row->pos_key = $validated['pos_key'];

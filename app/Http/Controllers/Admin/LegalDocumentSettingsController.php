@@ -20,15 +20,17 @@ class LegalDocumentSettingsController extends Controller
         $validated = $request->validate([
             'aszf_content' => ['required', 'string'],
             'shipping_terms_content' => ['required', 'string'],
+            'gdpr_content' => ['required', 'string'],
         ]);
 
         $settings = LegalDocumentSetting::current();
         $settings->aszf_content = $validated['aszf_content'];
         $settings->shipping_terms_content = $validated['shipping_terms_content'];
+        $settings->gdpr_content = $validated['gdpr_content'];
         $settings->save();
 
         return redirect()
             ->route('admin.legal-documents.edit')
-            ->with('success', 'Az ÁSZF és a szállítási feltételek mentve.');
+            ->with('success', 'Az ÁSZF, a szállítási feltételek és az adatkezelési tájékoztató mentve.');
     }
 }

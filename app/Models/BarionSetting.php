@@ -10,6 +10,7 @@ class BarionSetting extends Model
         'pos_key',
         'payee',
         'use_test',
+        'pixel_id',
     ];
 
     protected $casts = [

@@ -42,6 +42,8 @@
         @media (min-width: 1024px) { .carousel-slide { flex: 0 0 25%; min-width: 25%; } }
         .intro-more { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out; }
         .intro-more.open { max-height: 2000px; transition: max-height 0.6s ease-in; }
+        .footer-content img,
+        .contact-content img { max-width: 100%; height: auto; }
 
         /* Bootstrap carousel nyilak témához igazítva */
         .carousel-control-prev-icon,
@@ -56,6 +58,7 @@
             width: 3rem;
         }
     </style>
+    @include('partials.barion-pixel')
 </head>
 <body class="antialiased text-gray-800 bg-stone-50">
 
@@ -64,6 +67,15 @@
         <div class="absolute inset-0 header-overlay"></div>
         <div class="relative z-10 flex-1 flex flex-col justify-center px-4 py-8 md:px-8 md:py-12">
             <nav class="absolute top-4 right-4 md:top-8 md:right-8 flex items-center gap-3">
+                <button
+                    type="button"
+                    class="text-white/95 hover:text-white text-sm font-medium"
+                    data-bs-toggle="modal"
+                    data-bs-target="#contactModal"
+                >
+                    Kapcsolat
+                </button>
+
                 {{-- Kosár ikon --}}
                 <button
                     type="button"
@@ -117,6 +129,8 @@
             </div>
         </div>
     </header>
+
+    @include('partials.admin-home-menu')
 
     <main class="relative">
         {{-- Bemutatkozás --}}
@@ -336,17 +350,8 @@
     {{-- Footer --}}
     <footer class="bg-emerald-900 text-emerald-50 py-12 md:py-16">
         <div class="max-w-4xl mx-auto px-4">
-            <h2 class="font-display text-2xl md:text-3xl font-semibold mb-6">Kapcsolat</h2>
-            <div class="grid md:grid-cols-2 gap-8">
-                <div>
-                    <p class="font-semibold">Medveczkiné Magos Mónika</p>
-                    <p><a href="mailto:medmo1973@gmail.com" class="hover:text-emerald-200 underline">medmo1973@gmail.com</a></p>
-                    <p><a href="tel:+36309689532" class="hover:text-emerald-200">+36 30/968 9532</a></p>
-                </div>
-                <div>
-                    <p class="font-semibold">Medveczki István</p>
-                    <p><a href="tel:+36303037196" class="hover:text-emerald-200">+36 30/303 7196</a></p>
-                </div>
+            <div class="footer-content text-emerald-50 leading-relaxed">
+                {!! $siteContent->footer_content !!}
             </div>
             <div class="mt-6 flex flex-wrap gap-4 text-sm">
                 <button type="button" class="underline hover:text-emerald-200" data-bs-toggle="modal" data-bs-target="#aszfModal">
@@ -360,8 +365,25 @@
                 </button>
             </div>
             <p class="mt-8 text-emerald-200/90 text-sm">© {{ date('Y') }} Triem Dragonherbs. Minden jog fenntartva.</p>
+            <div class="mt-6">
+                @include('partials.barion-payment-logos', ['class' => 'text-left', 'label' => 'Biztonságos online fizetés:', 'labelClass' => 'text-emerald-200'])
+            </div>
         </div>
     </footer>
+
+    <div class="modal fade" id="contactModal" tabindex="-1" aria-labelledby="contactModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display text-2xl" id="contactModalLabel">Kapcsolat</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body text-gray-700 leading-relaxed contact-content">
+                    {!! $siteContent->contact_content !!}
+                </div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="aszfModal" tabindex="-1" aria-labelledby="aszfModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-xl modal-dialog-scrollable">
@@ -399,64 +421,7 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
                 </div>
                 <div class="modal-body text-gray-700 leading-relaxed space-y-4">
-                    <p><strong>1. Az adatkezelő adatai</strong><br>
-                    Név: Triem Dragonherbs<br>
-                    Székhely: 3214 Nagyréde, Kossuth L. utca 17.<br>
-                    Üzemeltető: Családi gazdaság<br>
-                    E-mail: medmo1973@gmail.com<br>
-                    Telefonszám: +36 30 968 9532</p>
-
-                    <p><strong>2. Az adatkezelés célja</strong><br>
-                    Az adatkezelés célja:<br>
-                    a megrendelések teljesítése<br>
-                    kapcsolattartás a vásárlókkal<br>
-                    számlázás<br>
-                    jogszabályi kötelezettségek teljesítése</p>
-
-                    <p><strong>3. Kezelt személyes adatok köre</strong><br>
-                    A webshop használata során az alábbi adatok kerülhetnek rögzítésre:<br>
-                    név<br>
-                    e-mail cím<br>
-                    telefonszám<br>
-                    szállítási cím<br>
-                    számlázási adatok<br>
-                    rendelési adatok</p>
-
-                    <p><strong>4. Az adatkezelés jogalapja</strong><br>
-                    Az adatkezelés jogalapja:<br>
-                    a szerződés teljesítése<br>
-                    jogi kötelezettség teljesítése<br>
-                    a vásárló hozzájárulása</p>
-
-                    <p><strong>5. Az adatok tárolásának időtartama</strong><br>
-                    A személyes adatokat:<br>
-                    a megrendelés teljesítéséig<br>
-                    vagy a jogszabályban előírt ideig (pl. számlázás miatt)<br>
-                    őrizzük meg.</p>
-
-                    <p><strong>6. Adattovábbítás</strong><br>
-                    A személyes adatok csak az alábbi esetekben kerülnek továbbításra:<br>
-                    futárszolgálat részére (szállítás céljából)<br>
-                    könyvelő részére (számlázás miatt)<br>
-                    Az adatok harmadik fél számára marketing célra nem kerülnek átadásra.</p>
-
-                    <p><strong>7. Adatbiztonság</strong><br>
-                    Az adatokat:<br>
-                    biztonságosan tároljuk<br>
-                    illetéktelen hozzáféréstől védjük<br>
-                    csak az arra jogosult személyek férnek hozzá</p>
-
-                    <p><strong>8. Az érintettek jogai</strong><br>
-                    A vásárlót az alábbi jogok illetik meg:<br>
-                    hozzáférés a saját adataihoz<br>
-                    adatok helyesbítése<br>
-                    adatok törlése<br>
-                    adatkezelés korlátozása<br>
-                    tiltakozás az adatkezelés ellen</p>
-
-                    <p><strong>9. Jogorvoslati lehetőség</strong><br>
-                    Amennyiben a Vásárló úgy érzi, hogy személyes adatai kezelésével kapcsolatban jogsérelem érte, panaszt tehet a következő hatóságnál:<br>
-                    👉 Nemzeti Adatvédelmi és Információszabadság Hatóság (NAIH)</p>
+                    {!! $legalDocuments->gdpr_content !!}
                 </div>
             </div>
         </div>
