@@ -30,6 +30,11 @@ class Order extends Model
         'items',
         'total_price',
         'payment_method',
+        'shipping_method',
+        'delivery_type',
+        'pickup_point_external_id',
+        'pickup_point_name',
+        'pickup_point_address',
         'barion_payment_id',
         'payment_status',
         'fizetve',
@@ -66,6 +71,28 @@ class Order extends Model
             'barion' => 'Barion kártya',
             default => 'Utánvét',
         };
+    }
+
+    public function shippingMethodLabel(): string
+    {
+        return ShippingMethodSetting::METHODS[$this->shipping_method] ?? '—';
+    }
+
+    public function deliveryTypeLabel(): string
+    {
+        return match ($this->delivery_type) {
+            'pickup' => 'Automata / csomagpont',
+            default => 'Házhozszállítás',
+        };
+    }
+
+    public function deliverySummary(): string
+    {
+        if ($this->delivery_type === 'pickup' && $this->pickup_point_name) {
+            return $this->pickup_point_name.' – '.($this->pickup_point_address ?? '');
+        }
+
+        return $this->shipping_address;
     }
 
     public function fizetveLabel(): string

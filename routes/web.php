@@ -3,12 +3,18 @@
 use App\Http\Controllers\Admin\BarionSettingsController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
+use App\Http\Controllers\Admin\PaymentMethodSettingsController;
+use App\Http\Controllers\Admin\ShippingMethodSettingsController;
 use App\Http\Controllers\Admin\WebshopSettingsController;
+use App\Models\PaymentMethodSetting;
+use App\Models\ShippingMethodSetting;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BarionPaymentController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\PickupPointController;
+use App\Models\PickupPoint;
 use App\Models\Product;
 use Illuminate\Support\Facades\Route;
 
@@ -37,9 +43,14 @@ Route::middleware('webshop.open')->group(function () {
             ->get()
             ->groupBy('category');
 
-        return view('webshop', compact('productsByCategory'));
+        $enabledPaymentMethods = PaymentMethodSetting::current()->enabledMethods();
+        $enabledShippingMethods = ShippingMethodSetting::current()->enabledMethods();
+        $carriersWithPickup = PickupPoint::carriersWithPoints();
+
+        return view('webshop', compact('productsByCategory', 'enabledPaymentMethods', 'enabledShippingMethods', 'carriersWithPickup'));
     })->name('webshop');
 
+    Route::get('/pickup-points', [PickupPointController::class, 'index'])->name('pickup-points.index');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
 });
 
@@ -68,4 +79,9 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::put('barion', [BarionSettingsController::class, 'update'])->name('barion.update');
     Route::get('webshop', [WebshopSettingsController::class, 'edit'])->name('webshop.edit');
     Route::put('webshop', [WebshopSettingsController::class, 'update'])->name('webshop.update');
+    Route::get('payment-methods', [PaymentMethodSettingsController::class, 'edit'])->name('payment-methods.edit');
+    Route::put('payment-methods', [PaymentMethodSettingsController::class, 'update'])->name('payment-methods.update');
+    Route::get('shipping-methods', [ShippingMethodSettingsController::class, 'edit'])->name('shipping-methods.edit');
+    Route::put('shipping-methods', [ShippingMethodSettingsController::class, 'update'])->name('shipping-methods.update');
+    Route::post('shipping-methods/sync-pickup-points', [ShippingMethodSettingsController::class, 'syncPickupPoints'])->name('shipping-methods.sync-pickup-points');
 });

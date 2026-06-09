@@ -127,7 +127,7 @@
                                     <input type="tel" class="form-control" id="orderPhone" required>
                                 </div>
 
-                                <div class="col-12">
+                                <div class="col-12" id="home-shipping-address-wrap">
                                     <label for="orderShippingAddress" class="form-label">Szállítási cím</label>
                                     <textarea class="form-control" id="orderShippingAddress" rows="2" required></textarea>
                                 </div>
@@ -144,11 +144,47 @@
 
                                 <div class="col-md-6">
                                     <label for="orderPaymentMethod" class="form-label mb-1">Fizetési mód</label>
-                                    <select id="orderPaymentMethod" class="form-select">
-                                        <option value="cod">Utánvét</option>
-                                        <option value="otp">OTP kártya</option>
-                                        <option value="barion">Barion kártya (online)</option>
-                                    </select>
+                                    @if(count($enabledPaymentMethods) > 0)
+                                        <select id="orderPaymentMethod" class="form-select" required>
+                                            @foreach($enabledPaymentMethods as $value => $label)
+                                                <option value="{{ $value }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        <p class="text-sm text-amber-700 mb-0">Jelenleg nem érhető el fizetési mód.</p>
+                                    @endif
+
+                                    <label for="orderShippingMethod" class="form-label mb-1 mt-3">Preferált szállítási mód</label>
+                                    @if(count($enabledShippingMethods) > 0)
+                                        <select id="orderShippingMethod" class="form-select" required>
+                                            @foreach($enabledShippingMethods as $value => $label)
+                                                <option value="{{ $value }}">{{ $label }}</option>
+                                            @endforeach
+                                        </select>
+                                    @else
+                                        <p class="text-sm text-amber-700 mb-0">Jelenleg nem érhető el szállítási mód.</p>
+                                    @endif
+
+                                    <div id="delivery-type-wrap" class="mt-3 d-none">
+                                        <label class="form-label mb-2">Kézbesítés módja</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="deliveryType" id="deliveryTypeHome" value="home" checked>
+                                            <label class="form-check-label" for="deliveryTypeHome">Házhozszállítás</label>
+                                        </div>
+                                        <div class="form-check" id="delivery-type-pickup-wrap">
+                                            <input class="form-check-input" type="radio" name="deliveryType" id="deliveryTypePickup" value="pickup">
+                                            <label class="form-check-label" for="deliveryTypePickup">Automata / csomagpont</label>
+                                        </div>
+                                    </div>
+
+                                    <div id="pickup-point-wrap" class="mt-3 d-none">
+                                        <label for="pickupPointSearch" class="form-label mb-1">Átvételi pont keresése</label>
+                                        <input type="text" class="form-control mb-2" id="pickupPointSearch" placeholder="Irányítószám, város vagy cím...">
+                                        <select id="orderPickupPoint" class="form-select" size="6">
+                                            <option value="">Először keressen vagy várjon a lista betöltésére...</option>
+                                        </select>
+                                        <div class="text-xs text-gray-500 mt-1" id="pickup-point-hint"></div>
+                                    </div>
                                 </div>
                                 <div class="col-md-6 text-md-end">
                                     <div class="text-sm text-gray-600">Fizetendő végösszeg:</div>
@@ -157,7 +193,7 @@
 
                                 <div class="col-12 d-flex justify-content-between mt-2">
                                     <button type="button" id="btn-back-to-cart" class="btn btn-outline-secondary">Vissza a kosárhoz</button>
-                                    <button type="submit" class="btn btn-success">Fizetés és rendelés véglegesítése</button>
+                                    <button type="submit" class="btn btn-success" @if(count($enabledPaymentMethods) === 0 || count($enabledShippingMethods) === 0) disabled @endif>Fizetés és rendelés véglegesítése</button>
                                 </div>
                             </form>
                         </div>
@@ -190,7 +226,10 @@
             var CART_STORAGE_KEY = 'triem_webshop_cart';
             var cart = [];
             var persistTimer = null;
+            var pickupSearchTimer = null;
             var currencyFormatter = new Intl.NumberFormat('hu-HU');
+            var carriersWithPickup = @json($carriersWithPickup);
+            var pickupPointsCache = {};
 
             function loadCart() {
                 try {
@@ -348,6 +387,16 @@
             var billingAddressWrap = document.getElementById('billing-address-wrap');
             var shippingAddressEl = document.getElementById('orderShippingAddress');
             var billingAddressEl = document.getElementById('orderBillingAddress');
+            var shippingMethodEl = document.getElementById('orderShippingMethod');
+            var deliveryTypeWrap = document.getElementById('delivery-type-wrap');
+            var deliveryTypeHome = document.getElementById('deliveryTypeHome');
+            var deliveryTypePickup = document.getElementById('deliveryTypePickup');
+            var deliveryTypePickupWrap = document.getElementById('delivery-type-pickup-wrap');
+            var pickupPointWrap = document.getElementById('pickup-point-wrap');
+            var pickupPointSearch = document.getElementById('pickupPointSearch');
+            var pickupPointSelect = document.getElementById('orderPickupPoint');
+            var pickupPointHint = document.getElementById('pickup-point-hint');
+            var homeShippingAddressWrap = document.getElementById('home-shipping-address-wrap');
 
             function showCartStep() {
                 var stepItems = document.getElementById('cart-step-items');
@@ -375,6 +424,124 @@
                 }
             }
 
+            function selectedDeliveryType() {
+                if (deliveryTypePickup && deliveryTypePickup.checked) {
+                    return 'pickup';
+                }
+                return 'home';
+            }
+
+            function carrierHasPickup(carrier) {
+                return carriersWithPickup.indexOf(carrier) !== -1;
+            }
+
+            function syncDeliveryVisibility() {
+                var carrier = shippingMethodEl ? shippingMethodEl.value : '';
+                var hasPickup = carrier !== '' && carrierHasPickup(carrier);
+                var deliveryType = selectedDeliveryType();
+
+                if (deliveryTypeWrap) {
+                    deliveryTypeWrap.classList.toggle('d-none', carrier === '');
+                }
+                if (deliveryTypePickupWrap) {
+                    deliveryTypePickupWrap.classList.toggle('d-none', !hasPickup);
+                }
+                if (!hasPickup && deliveryTypeHome) {
+                    deliveryTypeHome.checked = true;
+                }
+                if (pickupPointWrap) {
+                    pickupPointWrap.classList.toggle('d-none', deliveryType !== 'pickup' || !hasPickup);
+                }
+                if (homeShippingAddressWrap && shippingAddressEl) {
+                    var showHomeAddress = deliveryType === 'home';
+                    homeShippingAddressWrap.classList.toggle('d-none', !showHomeAddress);
+                    shippingAddressEl.required = showHomeAddress;
+                }
+                if (pickupPointSelect) {
+                    pickupPointSelect.required = deliveryType === 'pickup' && hasPickup;
+                }
+                if (sameBillingAddressCheckbox) {
+                    var sameBillingWrap = sameBillingAddressCheckbox.closest('.form-check');
+                    if (sameBillingWrap) {
+                        sameBillingWrap.classList.toggle('d-none', deliveryType === 'pickup');
+                    }
+                    if (deliveryType === 'pickup') {
+                        sameBillingAddressCheckbox.checked = false;
+                        if (billingAddressWrap) {
+                            billingAddressWrap.classList.remove('d-none');
+                        }
+                        if (billingAddressEl) {
+                            billingAddressEl.required = true;
+                        }
+                    } else {
+                        syncBillingVisibility();
+                    }
+                }
+            }
+
+            function renderPickupPoints(points) {
+                if (!pickupPointSelect) return;
+                pickupPointSelect.innerHTML = '';
+                if (!points.length) {
+                    var emptyOption = document.createElement('option');
+                    emptyOption.value = '';
+                    emptyOption.textContent = 'Nincs találat. Próbáljon másik keresést.';
+                    pickupPointSelect.appendChild(emptyOption);
+                    return;
+                }
+                points.forEach(function (point) {
+                    var option = document.createElement('option');
+                    option.value = point.id;
+                    option.textContent = point.label;
+                    option.dataset.name = point.name;
+                    option.dataset.address = point.address;
+                    pickupPointSelect.appendChild(option);
+                });
+            }
+
+            function loadPickupPoints(searchTerm) {
+                var carrier = shippingMethodEl ? shippingMethodEl.value : '';
+                if (!carrier || !carrierHasPickup(carrier)) {
+                    renderPickupPoints([]);
+                    return;
+                }
+
+                var cacheKey = carrier + '|' + (searchTerm || '');
+                if (pickupPointsCache[cacheKey]) {
+                    renderPickupPoints(pickupPointsCache[cacheKey]);
+                    if (pickupPointHint) {
+                        pickupPointHint.textContent = pickupPointsCache[cacheKey].length + ' találat';
+                    }
+                    return;
+                }
+
+                if (pickupPointHint) {
+                    pickupPointHint.textContent = 'Átvételi pontok betöltése...';
+                }
+
+                var url = '{{ route('pickup-points.index') }}?carrier=' + encodeURIComponent(carrier);
+                if (searchTerm) {
+                    url += '&q=' + encodeURIComponent(searchTerm);
+                }
+
+                fetch(url, { headers: { 'Accept': 'application/json' } })
+                    .then(function (response) { return response.json(); })
+                    .then(function (data) {
+                        var points = data.points || [];
+                        pickupPointsCache[cacheKey] = points;
+                        renderPickupPoints(points);
+                        if (pickupPointHint) {
+                            pickupPointHint.textContent = points.length ? (points.length + ' találat') : 'Nincs találat.';
+                        }
+                    })
+                    .catch(function () {
+                        renderPickupPoints([]);
+                        if (pickupPointHint) {
+                            pickupPointHint.textContent = 'Hiba történt az átvételi pontok betöltése közben.';
+                        }
+                    });
+            }
+
             function cleanupModalArtifacts() {
                 // Bootstrap modal maradekok takaritasa (backdrop, body lock)
                 document.querySelectorAll('.modal-backdrop').forEach(function (el) {
@@ -389,6 +556,7 @@
                 cartModal.addEventListener('show.bs.modal', function () {
                     showCartStep();
                     syncBillingVisibility();
+                    syncDeliveryVisibility();
                     // A megnyitas utan 1 frame-mel renderelunk, hogy ne fogja a modal animaciot
                     requestAnimationFrame(function () {
                         renderCart();
@@ -426,6 +594,8 @@
                 btnGoToCheckout.addEventListener('click', function () {
                     showCheckoutStep();
                     syncBillingVisibility();
+                    syncDeliveryVisibility();
+                    loadPickupPoints('');
                 });
             }
 
@@ -447,6 +617,40 @@
                 });
             }
 
+            if (shippingMethodEl) {
+                shippingMethodEl.addEventListener('change', function () {
+                    if (pickupPointSearch) {
+                        pickupPointSearch.value = '';
+                    }
+                    pickupPointsCache = {};
+                    syncDeliveryVisibility();
+                    if (selectedDeliveryType() === 'pickup') {
+                        loadPickupPoints('');
+                    }
+                });
+            }
+
+            [deliveryTypeHome, deliveryTypePickup].forEach(function (input) {
+                if (!input) return;
+                input.addEventListener('change', function () {
+                    syncDeliveryVisibility();
+                    if (selectedDeliveryType() === 'pickup') {
+                        loadPickupPoints(pickupPointSearch ? pickupPointSearch.value.trim() : '');
+                    }
+                });
+            });
+
+            if (pickupPointSearch) {
+                pickupPointSearch.addEventListener('input', function () {
+                    if (pickupSearchTimer) {
+                        clearTimeout(pickupSearchTimer);
+                    }
+                    pickupSearchTimer = setTimeout(function () {
+                        loadPickupPoints(pickupPointSearch.value.trim());
+                    }, 300);
+                });
+            }
+
             if (orderForm) {
                 orderForm.addEventListener('submit', function (event) {
                     event.preventDefault();
@@ -454,11 +658,53 @@
                         alert('A kosár üres.');
                         return;
                     }
-                    var total = cart.reduce(function (sum, item) { return sum + (item.price * item.qty); }, 0);
-                    var shippingAddress = document.getElementById('orderShippingAddress').value.trim();
-                    var billingAddress = (sameBillingAddressCheckbox && sameBillingAddressCheckbox.checked)
+                    var paymentEl = document.getElementById('orderPaymentMethod');
+                    if (!paymentEl) {
+                        alert('Jelenleg nem érhető el fizetési mód.');
+                        return;
+                    }
+                    var shippingMethodEl = document.getElementById('orderShippingMethod');
+                    if (!shippingMethodEl) {
+                        alert('Jelenleg nem érhető el szállítási mód.');
+                        return;
+                    }
+
+                    var deliveryType = selectedDeliveryType();
+                    var shippingAddress = '';
+                    var pickupPointExternalId = null;
+                    var pickupPointName = null;
+                    var pickupPointAddress = null;
+
+                    if (deliveryType === 'home') {
+                        shippingAddress = document.getElementById('orderShippingAddress').value.trim();
+                        if (!shippingAddress) {
+                            alert('Kérjük, adja meg a szállítási címet.');
+                            return;
+                        }
+                    } else {
+                        if (!pickupPointSelect || !pickupPointSelect.value) {
+                            alert('Kérjük, válasszon átvételi pontot.');
+                            return;
+                        }
+                        var selectedOption = pickupPointSelect.options[pickupPointSelect.selectedIndex];
+                        pickupPointExternalId = pickupPointSelect.value;
+                        pickupPointName = selectedOption.dataset.name || selectedOption.textContent;
+                        pickupPointAddress = selectedOption.dataset.address || '';
+                    }
+
+                    var billingAddress = (sameBillingAddressCheckbox && sameBillingAddressCheckbox.checked && deliveryType === 'home')
                         ? shippingAddress
                         : document.getElementById('orderBillingAddress').value.trim();
+                    if (!billingAddress) {
+                        alert('Kérjük, adja meg a számlázási címet.');
+                        return;
+                    }
+                    if (!shippingMethodEl) {
+                        alert('Jelenleg nem érhető el szállítási mód.');
+                        return;
+                    }
+
+                    var total = cart.reduce(function (sum, item) { return sum + (item.price * item.qty); }, 0);
                     fetch('{{ route('orders.store') }}', {
                         method: 'POST',
                         headers: {
@@ -473,7 +719,12 @@
                             billing_address: billingAddress,
                             items: cart,
                             total_price: total,
-                            payment_method: document.getElementById('orderPaymentMethod').value
+                            payment_method: paymentEl.value,
+                            shipping_method: shippingMethodEl.value,
+                            delivery_type: deliveryType,
+                            pickup_point_external_id: pickupPointExternalId,
+                            pickup_point_name: pickupPointName,
+                            pickup_point_address: pickupPointAddress
                         })
                     }).then(function (response) {
                         return response.json().then(function (data) {

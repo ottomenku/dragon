@@ -53,6 +53,16 @@
                     </select>
                     @error('payment_method') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1" for="shipping_method">Szállítási mód</label>
+                    <select id="shipping_method" name="shipping_method" class="w-full rounded-md border-gray-300 focus:border-emerald-500 focus:ring-emerald-500">
+                        <option value="" {{ old('shipping_method', $order->shipping_method) === null || old('shipping_method', $order->shipping_method) === '' ? 'selected' : '' }}>—</option>
+                        @foreach(\App\Models\ShippingMethodSetting::METHODS as $value => $label)
+                            <option value="{{ $value }}" {{ old('shipping_method', $order->shipping_method) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                        @endforeach
+                    </select>
+                    @error('shipping_method') <p class="text-sm text-red-600 mt-1">{{ $message }}</p> @enderror
+                </div>
                 @if($order->payment_method === 'barion')
                     <div class="rounded-lg bg-stone-50 border border-stone-200 p-3 text-sm text-gray-700 space-y-1">
                         <p><span class="font-medium">Barion PaymentId:</span> {{ $order->barion_payment_id ?: '—' }}</p>

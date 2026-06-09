@@ -31,4 +31,8 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'mpl' => [
+        'postinfo_url' => env('MPL_POSTINFO_URL'),
+    ],
+
 ];

@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Models\ShippingMethodSetting;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -52,6 +53,7 @@ class OrderController extends Controller
             'billing_address' => ['required', 'string', 'max:500'],
             'total_price' => ['required', 'integer', 'min:0'],
             'payment_method' => ['required', 'in:cod,otp,barion'],
+            'shipping_method' => ['nullable', Rule::in(array_keys(ShippingMethodSetting::METHODS))],
             'fizetve' => ['nullable', Rule::in(array_keys(Order::fizetveOptions()))],
             'shipped' => ['sometimes', 'boolean'],
             'note' => ['nullable', 'string'],
@@ -59,6 +61,7 @@ class OrderController extends Controller
 
         $data['shipped'] = $request->boolean('shipped');
         $data['fizetve'] = $request->input('fizetve') ?: null;
+        $data['shipping_method'] = $request->input('shipping_method') ?: null;
 
         $order->update($data);
 

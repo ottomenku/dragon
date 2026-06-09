@@ -13,7 +13,13 @@
             <h2 class="text-lg font-semibold text-gray-800 mb-2">Vevő adatai</h2>
             <p><span class="font-medium">Név:</span> {{ $order->name }}</p>
             <p><span class="font-medium">Telefon:</span> {{ $order->phone }}</p>
-            <p><span class="font-medium">Szállítási cím:</span><br>{{ $order->shipping_address }}</p>
+            <p><span class="font-medium">Kézbesítés:</span> {{ $order->deliveryTypeLabel() }}</p>
+            @if($order->delivery_type === 'pickup')
+                <p><span class="font-medium">Átvételi pont:</span><br>{{ $order->pickup_point_name }}<br>{{ $order->pickup_point_address }}</p>
+            @else
+                <p><span class="font-medium">Szállítási cím:</span><br>{{ $order->shipping_address }}</p>
+            @endif
+            <p><span class="font-medium">Szállítási mód:</span> {{ $order->shippingMethodLabel() }}</p>
             <p><span class="font-medium">Számlázási cím:</span><br>{{ $order->billing_address }}</p>
         </div>
         <div class="bg-white rounded-xl shadow border border-gray-200 p-4 space-y-2">
