@@ -19,8 +19,21 @@ class BarionBranding
         return self::pixelId() !== null;
     }
 
-    public static function showPaymentLogos(): bool
+    public static function showFooterBranding(): bool
+    {
+        return (bool) (BarionSetting::current()?->pixel_footer_enabled ?? false);
+    }
+
+    public static function showCheckoutLogos(): bool
     {
         return PaymentMethodSetting::isEnabled('barion');
+    }
+
+    public static function shouldShowBranding(string $context = 'footer'): bool
+    {
+        return match ($context) {
+            'checkout' => self::showCheckoutLogos(),
+            default => self::showFooterBranding(),
+        };
     }
 }

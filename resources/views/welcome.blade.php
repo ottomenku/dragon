@@ -92,6 +92,9 @@
                 </button>
 
                 @auth
+                    @if(auth()->user()->isAdmin())
+                        <a href="{{ route('admin.products.index') }}" class="text-white/95 hover:text-white text-sm font-medium">Admin</a>
+                    @endif
                     @if($webshopLinkVisible ?? false)
                         <a href="{{ route('webshop') }}" class="text-white/95 hover:text-white text-sm font-medium">Webshop</a>
                     @endif
@@ -129,8 +132,6 @@
             </div>
         </div>
     </header>
-
-    @include('partials.admin-home-menu')
 
     <main class="relative">
         {{-- Bemutatkozás --}}

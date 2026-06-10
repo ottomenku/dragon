@@ -11,10 +11,12 @@ class BarionSetting extends Model
         'payee',
         'use_test',
         'pixel_id',
+        'pixel_footer_enabled',
     ];
 
     protected $casts = [
         'use_test' => 'boolean',
+        'pixel_footer_enabled' => 'boolean',
         'pos_key' => 'encrypted',
     ];
 

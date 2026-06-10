@@ -17,7 +17,7 @@
         <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <a href="{{ url('/') }}" class="font-display text-xl font-semibold hover:text-emerald-200">Triem Dragonherbs</a>
             <nav class="flex items-center gap-4">
-                @if(in_array(auth()->id(), [1, 2, 3]))
+                @if(auth()->user()->isAdmin())
                     <a href="{{ route('admin.products.index') }}" class="text-emerald-200 hover:text-white font-medium">Admin</a>
                 @endif
                 <span class="text-emerald-200">{{ auth()->user()->name }}</span>

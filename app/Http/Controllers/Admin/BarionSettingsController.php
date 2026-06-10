@@ -22,23 +22,27 @@ class BarionSettingsController extends Controller
     {
         $existing = BarionSetting::query()->first();
 
+        $request->merge([
+            'payee' => filled($request->input('payee')) ? $request->input('payee') : null,
+            'pos_key' => filled($request->input('pos_key')) ? $request->input('pos_key') : null,
+            'pixel_id' => filled($request->input('pixel_id')) ? trim($request->input('pixel_id')) : null,
+        ]);
+
         $validated = $request->validate([
-            'payee' => ['required', 'email', 'max:255'],
-            'pos_key' => [
-                $existing && filled($existing->pos_key) ? 'nullable' : 'required',
-                'string',
-                'max:512',
-            ],
+            'payee' => ['nullable', 'email', 'max:255'],
+            'pos_key' => ['nullable', 'string', 'max:512'],
             'use_test' => ['sometimes', 'boolean'],
-            'pixel_id' => ['nullable', 'string', 'max:32', 'regex:/^BP-[A-Z0-9]+-\d{2}$/i'],
+            'pixel_id' => ['nullable', 'string', 'max:32'],
+            'pixel_footer_enabled' => ['sometimes', 'boolean'],
         ]);
 
         $row = $existing ?? new BarionSetting;
-        $row->payee = $validated['payee'];
+        $row->payee = $validated['payee'] ?? null;
         $row->use_test = $request->boolean('use_test');
-        $row->pixel_id = filled($validated['pixel_id'] ?? null) ? strtoupper(trim($validated['pixel_id'])) : null;
+        $row->pixel_id = filled($validated['pixel_id'] ?? null) ? strtoupper($validated['pixel_id']) : null;
+        $row->pixel_footer_enabled = $request->boolean('pixel_footer_enabled');
 
-        if (! empty($validated['pos_key'])) {
+        if (array_key_exists('pos_key', $validated) && filled($validated['pos_key'])) {
             $row->pos_key = $validated['pos_key'];
         }
 

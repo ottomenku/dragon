@@ -162,7 +162,7 @@
                                         <p class="text-sm text-amber-700 mb-0">Jelenleg nem érhető el fizetési mód.</p>
                                     @endif
 
-                                    @include('partials.barion-payment-logos', ['class' => 'mt-3'])
+                                    @include('partials.barion-payment-logos', ['context' => 'checkout', 'class' => 'mt-3'])
 
                                     <label for="orderShippingMethod" class="form-label mb-1 mt-3">Preferált szállítási mód</label>
                                     @if(count($enabledShippingMethods) > 0)

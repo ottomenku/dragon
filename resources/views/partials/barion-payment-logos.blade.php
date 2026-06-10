@@ -1,4 +1,4 @@
-@if(\App\Support\BarionBranding::showPaymentLogos())
+@if(\App\Support\BarionBranding::shouldShowBranding($context ?? 'footer'))
     <div class="{{ $class ?? '' }}">
         <p class="text-xs {{ $labelClass ?? 'text-gray-500' }} mb-2">{{ $label ?? 'Elfogadott online fizetési módok:' }}</p>
         <img

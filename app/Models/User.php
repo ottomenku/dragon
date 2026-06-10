@@ -45,6 +45,6 @@ class User extends Authenticatable
 
     public function isAdmin(): bool
     {
-        return in_array((int) $this->id, [1, 2, 3], true);
+        return (int) $this->id <= 3;
     }
 }
