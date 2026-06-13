@@ -76,6 +76,8 @@
                     Kapcsolat
                 </button>
 
+                <a href="{{ route('blog-gallery.index') }}" class="text-white/95 hover:text-white text-sm font-medium">Galéria</a>
+
                 {{-- Kosár ikon --}}
                 <button
                     type="button"
@@ -166,7 +168,13 @@
         {{-- Termékek carousel (Bootstrap, több elem asztalin) --}}
         <section class="bg-white border-y border-emerald-100 py-12 md:py-16">
             <div class="max-w-6xl mx-auto px-4">
-                <h2 class="font-display text-3xl md:text-4xl font-semibold text-emerald-900 mb-8 text-center">Termékeink</h2>
+                <h2 class="font-display text-3xl md:text-4xl font-semibold text-emerald-900 {{ \App\Models\WebshopSetting::isOpen() ? 'mb-3' : 'mb-8' }} text-center">Termék ajánló</h2>
+                @if(\App\Models\WebshopSetting::isOpen())
+                    <p class="text-center text-sm text-gray-600 mb-8">
+                        A teljes kínálatot megtekintheti ide kattintva:
+                        <a href="{{ route('webshop') }}" class="text-emerald-700 hover:text-emerald-900 underline font-medium">Webáruház</a>
+                    </p>
+                @endif
                 @if(isset($products) && $products->isNotEmpty())
                     <div id="productsCarousel" class="carousel slide" data-bs-ride="false">
                         <div class="carousel-inner">

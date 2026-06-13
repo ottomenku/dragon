@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Product;
+use App\Support\PublicUploads;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -24,7 +25,7 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'image' => ['nullable', 'image', 'max:2048'],
+            'image' => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif,webp', 'max:4096'],
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'in:gyogyteak,illoolajok,kozmetikumok'],
             'intro' => ['required', 'string', 'max:255'],
@@ -39,7 +40,7 @@ class ProductController extends Controller
         $validated['tomain'] = $request->boolean('tomain');
 
         if ($request->hasFile('image')) {
-            $validated['image'] = $request->file('image')->store('products', 'public');
+            $validated['image'] = PublicUploads::storeImage($request->file('image'));
         }
 
         Product::create($validated);
@@ -55,7 +56,7 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
-            'image' => ['nullable', 'image', 'max:2048'],
+            'image' => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif,webp', 'max:4096'],
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'in:gyogyteak,illoolajok,kozmetikumok'],
             'intro' => ['required', 'string', 'max:255'],
@@ -73,7 +74,7 @@ class ProductController extends Controller
             if ($product->image) {
                 Storage::disk('public')->delete($product->image);
             }
-            $validated['image'] = $request->file('image')->store('products', 'public');
+            $validated['image'] = PublicUploads::storeImage($request->file('image'));
         }
 
         $product->update($validated);

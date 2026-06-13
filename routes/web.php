@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Admin\LegalDocumentSettingsController;
 use App\Http\Controllers\Admin\BarionSettingsController;
+use App\Http\Controllers\Admin\BlogGalleryController as AdminBlogGalleryController;
+use App\Http\Controllers\Admin\BlogGalleryImageController;
 use App\Http\Controllers\Admin\ContentImageController;
 use App\Http\Controllers\Admin\OrderController as AdminOrderController;
 use App\Http\Controllers\Admin\ProductController as AdminProductController;
@@ -16,6 +18,7 @@ use App\Models\SiteContentSetting;
 use App\Http\Controllers\Auth\LoginController;
 use App\Http\Controllers\Auth\RegisterController;
 use App\Http\Controllers\BarionPaymentController;
+use App\Http\Controllers\BlogGalleryController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\PickupPointController;
@@ -41,6 +44,8 @@ Route::get('/', function () {
 
     return view('welcome', compact('products', 'legalDocuments', 'siteContent'));
 })->name('welcome');
+
+Route::get('/blog-galeria', [BlogGalleryController::class, 'show'])->name('blog-gallery.index');
 
 Route::middleware('webshop.open')->group(function () {
     Route::get('/webshop', function () {
@@ -83,6 +88,8 @@ Route::get('/home', HomeController::class)->name('home')->middleware('auth');
 // Admin – csak user id 1, 2, 3
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
     Route::resource('products', AdminProductController::class)->except(['show']);
+    Route::get('blog-gallery', [AdminBlogGalleryController::class, 'edit'])->name('blog-gallery.edit');
+    Route::put('blog-gallery', [AdminBlogGalleryController::class, 'update'])->name('blog-gallery.update');
     Route::get('orders/{order}/transactions', [AdminOrderController::class, 'transactions'])->name('orders.transactions');
     Route::resource('orders', AdminOrderController::class)->except(['create', 'store']);
     Route::get('barion', [BarionSettingsController::class, 'edit'])->name('barion.edit');
@@ -101,4 +108,5 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::get('site-content/footer', [SiteContentSettingsController::class, 'editFooter'])->name('site-content.footer.edit');
     Route::put('site-content/footer', [SiteContentSettingsController::class, 'updateFooter'])->name('site-content.footer.update');
     Route::post('content-images', [ContentImageController::class, 'store'])->name('content-images.store');
+    Route::post('blog-gallery-images', [BlogGalleryImageController::class, 'store'])->name('blog-gallery-images.store');
 });

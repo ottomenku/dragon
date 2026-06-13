@@ -1,4 +1,5 @@
 <a href="{{ route('admin.products.index') }}" class="{{ $linkClass ?? 'text-emerald-100 hover:text-white' }}">Termékek</a>
+<a href="{{ route('admin.blog-gallery.edit') }}" class="{{ $linkClass ?? 'text-emerald-100 hover:text-white' }}">Galéria</a>
 <a href="{{ route('admin.orders.index') }}" class="{{ $linkClass ?? 'text-emerald-100 hover:text-white' }}">Megrendelések</a>
 <a href="{{ route('admin.barion.edit') }}" class="{{ $linkClass ?? 'text-emerald-100 hover:text-white' }}">Barion</a>
 <a href="{{ route('admin.webshop.edit') }}" class="{{ $linkClass ?? 'text-emerald-100 hover:text-white' }}">Webshop</a>
