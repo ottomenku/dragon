@@ -6,7 +6,7 @@
     <div class="mb-6">
         <h1 class="text-2xl font-semibold text-gray-800">Barion beállítások</h1>
         <p class="text-gray-500 text-sm mt-1">
-            A kártyás fizetéshez (Payee, POSKey) és a Barion Pixel követéshez külön adhat meg értékeket. Egyik sem kötelező a mentéshez.
+            Az elfogadóhely jóváhagyásához a Barion Pixel ID megadása kötelező (Alap verzió). A kártyás fizetéshez Payee és POSKey szükséges.
         </p>
     </div>
 

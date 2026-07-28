@@ -85,10 +85,51 @@
 
     <footer class="bg-emerald-900 text-emerald-50 py-8 mt-10">
         <div class="max-w-6xl mx-auto px-4">
+            <div class="flex flex-wrap gap-4 text-sm mb-4">
+                <button type="button" class="underline hover:text-emerald-200" data-bs-toggle="modal" data-bs-target="#webshopAszfModal">ÁSZF</button>
+                <button type="button" class="underline hover:text-emerald-200" data-bs-toggle="modal" data-bs-target="#webshopShippingModal">Szállítási feltételek</button>
+                <button type="button" class="underline hover:text-emerald-200" data-bs-toggle="modal" data-bs-target="#webshopGdprModal">Adatkezelési tájékoztató</button>
+            </div>
             @include('partials.barion-payment-logos', ['class' => 'max-w-2xl', 'label' => 'Biztonságos online fizetés:', 'labelClass' => 'text-emerald-200'])
             <p class="mt-6 text-emerald-200/90 text-sm">© {{ date('Y') }} Triem Dragonherbs</p>
         </div>
     </footer>
+
+    <div class="modal fade" id="webshopAszfModal" tabindex="-1" aria-labelledby="webshopAszfModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display text-2xl" id="webshopAszfModalLabel">Általános Szerződési Feltételek (ÁSZF)</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body text-gray-700 leading-relaxed space-y-4">{!! $legalDocuments->aszf_content !!}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="webshopShippingModal" tabindex="-1" aria-labelledby="webshopShippingModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display text-2xl" id="webshopShippingModalLabel">Szállítási feltételek</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body text-gray-700 leading-relaxed space-y-4">{!! $legalDocuments->shipping_terms_content !!}</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="webshopGdprModal" tabindex="-1" aria-labelledby="webshopGdprModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-xl modal-dialog-scrollable">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display text-2xl" id="webshopGdprModalLabel">Adatkezelési tájékoztató</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body text-gray-700 leading-relaxed space-y-4">{!! $legalDocuments->gdpr_content !!}</div>
+            </div>
+        </div>
+    </div>
 
     <div class="modal fade" id="cartModal" tabindex="-1" aria-labelledby="cartModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-lg modal-dialog-centered">
