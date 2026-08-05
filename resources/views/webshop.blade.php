@@ -57,22 +57,52 @@
                         @foreach($productsByCategory[$category] as $product)
                             <article class="bg-white rounded-xl border border-emerald-100 shadow-sm overflow-hidden">
                                 @if($product->image)
-                                    <img src="{{ Storage::url($product->image) }}" alt="{{ $product->title }}" class="w-full h-48 object-cover">
+                                    <button
+                                        type="button"
+                                        class="product-image-lightbox-trigger"
+                                        data-bs-toggle="modal"
+                                        data-bs-target="#productImageModal"
+                                        data-image-url="{{ Storage::url($product->image) }}"
+                                        data-image-title="{{ $product->title }}"
+                                        aria-label="{{ $product->title }} – kép nagyítása"
+                                    >
+                                        <img src="{{ Storage::url($product->image) }}" alt="{{ $product->title }}" class="w-full h-48 object-cover">
+                                    </button>
                                 @endif
                                 <div class="p-4">
                                     <h3 class="font-display text-2xl text-emerald-900 font-semibold">{{ $product->title }}</h3>
-                                    <p class="mt-2 text-sm text-gray-600">{{ $product->intro }}</p>
+                                    <p class="mt-2 text-sm text-gray-600">{{ Str::limit($product->intro, 120) }}</p>
+                                    @if(!empty($product->moreinfo))
+                                        <div id="product-moreinfo-{{ $product->id }}" class="hidden">
+                                            {!! $product->moreinfo !!}
+                                        </div>
+                                    @endif
                                     <div class="mt-3 flex items-center justify-between gap-2">
                                         <p class="text-lg font-semibold text-emerald-800 mb-0">{{ number_format($product->ar) }} Ft</p>
-                                        <button
-                                            type="button"
-                                            class="btn btn-sm btn-success btn-add-to-cart"
-                                            data-product-id="{{ $product->id }}"
-                                            data-product-title="{{ $product->title }}"
-                                            data-product-price="{{ $product->ar }}"
-                                        >
-                                            Kosárba
-                                        </button>
+                                        <div class="flex gap-1">
+                                            @if(!empty($product->moreinfo))
+                                                <button
+                                                    type="button"
+                                                    class="btn btn-sm btn-outline-success"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#productMoreInfoModal"
+                                                    data-product-title="{{ $product->title }}"
+                                                    data-product-moreinfo-id="{{ $product->id }}"
+                                                    data-product-image="{{ $product->image ? Storage::url($product->image) : '' }}"
+                                                >
+                                                    Bővebben
+                                                </button>
+                                            @endif
+                                            <button
+                                                type="button"
+                                                class="btn btn-sm btn-success btn-add-to-cart"
+                                                data-product-id="{{ $product->id }}"
+                                                data-product-title="{{ $product->title }}"
+                                                data-product-price="{{ $product->ar }}"
+                                            >
+                                                Kosárba
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </article>
@@ -319,6 +349,52 @@
             </div>
         </div>
     </div>
+
+    @include('partials.product-image-lightbox')
+
+    {{-- Termékek "Bővebben" modal --}}
+    <div class="modal fade" id="productMoreInfoModal" tabindex="-1" aria-labelledby="productMoreInfoModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title font-display text-xl" id="productMoreInfoModalLabel">Termék részletei</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Bezárás"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="productMoreInfoContent" class="text-gray-700 clearfix"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            var modal = document.getElementById('productMoreInfoModal');
+            if (!modal) return;
+            modal.addEventListener('show.bs.modal', function (event) {
+                var button = event.relatedTarget;
+                if (!button) return;
+                var title = button.getAttribute('data-product-title') || '';
+                var moreinfoId = button.getAttribute('data-product-moreinfo-id') || '';
+                var imageUrl = button.getAttribute('data-product-image') || '';
+                var modalTitle = modal.querySelector('.modal-title');
+                var modalBody = document.getElementById('productMoreInfoContent');
+                if (modalTitle) modalTitle.textContent = title;
+                if (modalBody) {
+                    var source = moreinfoId ? document.getElementById('product-moreinfo-' + moreinfoId) : null;
+                    var html = '';
+                    if (imageUrl) {
+                        var safeTitle = title.replace(/"/g, '&quot;');
+                        html += '<img src="' + imageUrl + '" alt="' + safeTitle + '" class="img-fluid float-start me-3 mb-2" style="max-width: 140px; height: auto;">';
+                    }
+                    if (source) {
+                        html += source.innerHTML;
+                    }
+                    modalBody.innerHTML = html;
+                }
+            });
+        })();
+    </script>
 
     <script>
         (function () {

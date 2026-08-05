@@ -185,7 +185,17 @@
                                             <div class="col-12 col-md-6 col-lg-4 d-flex justify-content-center">
                                                 <div class="bg-stone-50 rounded-xl overflow-hidden shadow-md hover:shadow-xl transition-shadow border border-emerald-100 flex flex-col w-100" style="max-width: 22rem;">
                                                     @if($product->image)
-                                                        <img src="{{ Storage::url($product->image) }}" alt="{{ $product->title }}" class="d-block w-100 img-fluid" style="max-height: 260px; object-fit: contain;">
+                                                        <button
+                                                            type="button"
+                                                            class="product-image-lightbox-trigger"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#productImageModal"
+                                                            data-image-url="{{ Storage::url($product->image) }}"
+                                                            data-image-title="{{ $product->title }}"
+                                                            aria-label="{{ $product->title }} – kép nagyítása"
+                                                        >
+                                                            <img src="{{ Storage::url($product->image) }}" alt="{{ $product->title }}" class="d-block w-100 img-fluid" style="max-height: 260px; object-fit: contain;">
+                                                        </button>
                                                     @else
                                                         <div class="w-full h-48 bg-emerald-100 flex items-center justify-center text-emerald-700 text-sm">Nincs kép</div>
                                                     @endif
@@ -246,6 +256,8 @@
                 @endif
             </div>
         </section>
+
+        @include('partials.product-image-lightbox')
 
         {{-- Termékek "Bővebben" modal --}}
         <div class="modal fade" id="productMoreInfoModal" tabindex="-1" aria-labelledby="productMoreInfoModalLabel" aria-hidden="true">

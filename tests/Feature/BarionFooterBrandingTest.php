@@ -92,10 +92,10 @@ class BarionFooterBrandingTest extends TestCase
             'pixel_footer_enabled' => false,
         ]);
 
-        $this->get(route('welcome'))->assertDontSee('barion-card-strip-intl__medium.png', false);
+        $this->get(route('welcome'))->assertDontSee('barion-payment-banner-medium-dark.png', false);
 
         BarionSetting::current()->update(['pixel_footer_enabled' => true]);
 
-        $this->get(route('welcome'))->assertSee('barion-card-strip-intl__medium.png', false);
+        $this->get(route('welcome'))->assertSee('barion-payment-banner-medium-dark.png', false);
     }
 }

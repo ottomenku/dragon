@@ -25,7 +25,7 @@ class ProductController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'image' => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif,webp', 'max:4096'],
+            'image' => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif,webp', 'max:20480'],
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'in:gyogyteak,illoolajok,kozmetikumok'],
             'intro' => ['required', 'string', 'max:255'],
@@ -56,7 +56,7 @@ class ProductController extends Controller
     public function update(Request $request, Product $product)
     {
         $validated = $request->validate([
-            'image' => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif,webp', 'max:4096'],
+            'image' => ['nullable', 'file', 'mimes:jpeg,jpg,png,gif,webp', 'max:20480'],
             'title' => ['required', 'string', 'max:255'],
             'category' => ['required', 'in:gyogyteak,illoolajok,kozmetikumok'],
             'intro' => ['required', 'string', 'max:255'],

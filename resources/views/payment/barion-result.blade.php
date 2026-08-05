@@ -43,7 +43,7 @@
         @endif
 
         <div class="mt-6">
-            @include('partials.barion-payment-logos', ['class' => 'text-left'])
+            @include('partials.barion-payment-logos', ['class' => 'text-left', 'variant' => 'light'])
         </div>
 
         <div class="mt-8">

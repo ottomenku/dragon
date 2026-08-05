@@ -54,7 +54,7 @@
         <div class="bg-white rounded-xl shadow border border-gray-200 p-6 space-y-4">
             <div>
                 <h2 class="text-lg font-semibold text-gray-800">Képek</h2>
-                <p class="text-sm text-gray-500 mt-1">Egyszerre több képet is kiválaszthat. A cím és leírás nem kötelező.</p>
+                <p class="text-sm text-gray-500 mt-1">Egyszerre több képet is kiválaszthat. A rendszer automatikusan átméretezi és optimalizálja őket.</p>
             </div>
 
             <div>
@@ -108,6 +108,7 @@
 @endsection
 
 @push('scripts')
+<script src="{{ asset('js/admin-image-resize.js') }}"></script>
 <script>
 (function () {
     var imagesContainer = document.getElementById('images-container');
@@ -179,21 +180,30 @@
             return;
         }
 
-        setUploadStatus('Képek feltöltése (' + files.length + ' db)...', false);
+        setUploadStatus('Képek optimalizálása és feltöltése (' + files.length + ' db)...', false);
 
-        var formData = new FormData();
-        Array.prototype.forEach.call(files, function (file) {
-            formData.append('images[]', file);
-        });
+        var resize = window.AdminImageResize && window.AdminImageResize.resizeImageFile
+            ? window.AdminImageResize.resizeImageFile.bind(window.AdminImageResize)
+            : function (file) { return Promise.resolve(file); };
 
-        fetch(uploadUrl, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': csrfToken,
-                'Accept': 'application/json'
-            },
-            body: formData,
-            credentials: 'same-origin'
+        Promise.all(Array.prototype.map.call(files, function (file) {
+            return resize(file);
+        }))
+        .then(function (optimizedFiles) {
+            var formData = new FormData();
+            optimizedFiles.forEach(function (file) {
+                formData.append('images[]', file);
+            });
+
+            return fetch(uploadUrl, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json'
+                },
+                body: formData,
+                credentials: 'same-origin'
+            });
         })
         .then(function (response) {
             return response.text().then(function (text) {

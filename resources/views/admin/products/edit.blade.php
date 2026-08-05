@@ -8,7 +8,7 @@
     </div>
     <h1 class="text-2xl font-semibold text-gray-800 mb-6">Termék szerkesztése: {{ $product->title }}</h1>
 
-    <form action="{{ route('admin.products.update', $product) }}" method="POST" enctype="multipart/form-data" class="bg-white rounded-xl shadow border border-gray-200 p-6 space-y-4">
+    <form action="{{ route('admin.products.update', $product) }}" method="POST" enctype="multipart/form-data" data-auto-resize-image="1" class="bg-white rounded-xl shadow border border-gray-200 p-6 space-y-4">
         @csrf
         @method('PUT')
 
@@ -20,7 +20,8 @@
                     <p class="text-xs text-gray-500 mt-1">Jelenlegi kép. Új feltöltés felülírja.</p>
                 </div>
             @endif
-            <input type="file" name="image" id="image" accept="image/*" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-700">
+            <input type="file" name="image" id="image" accept="image/jpeg,image/png,image/gif,image/webp" class="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-emerald-50 file:text-emerald-700">
+            <p class="mt-1 text-xs text-gray-500">Bármilyen méretű fotó feltölhető – a rendszer automatikusan átméretezi és optimalizálja.</p>
             @error('image')<p class="mt-1 text-sm text-red-600">{{ $message }}</p>@enderror
         </div>
 
@@ -87,4 +88,5 @@
     </form>
 
     @include('admin.products._quill_editor')
+    @include('admin.partials._image_resize_script')
 @endsection

@@ -108,10 +108,10 @@ class BarionPaymentService
         if (! empty($json['Errors']) && is_array($json['Errors'])) {
             $first = $json['Errors'][0] ?? [];
             $msg = is_array($first)
-                ? (string) ($first['Description'] ?? $first['Title'] ?? $first['ErrorCode'] ?? 'Ismeretlen Barion hiba')
+                ? $this->userFacingErrorMessage($first)
                 : 'Barion hiba';
 
-            Log::warning('Barion StartPayment API hiba', ['errors' => $json['Errors']]);
+            $this->logBarionWarning('Barion StartPayment API hiba', ['errors' => $json['Errors']]);
 
             return ['ok' => false, 'message' => $msg];
         }
@@ -293,5 +293,32 @@ class BarionPaymentService
         }
 
         $order->save();
+    }
+
+    /**
+     * @param  array<string, mixed>  $error
+     */
+    private function userFacingErrorMessage(array $error): string
+    {
+        $code = (string) ($error['ErrorCode'] ?? '');
+
+        return match ($code) {
+            'AuthenticationFailed' => 'A Barion fizetés beállítása hibás (teszt/éles POSKey vagy payee). Kérjük, ellenőrizze az admin Barion beállításokat, vagy válasszon másik fizetési módot.',
+            'InsufficientFunds' => 'Nincs elegendő fedezet a kártyán.',
+            'CardExpired' => 'A kártya lejárt.',
+            default => (string) ($error['Description'] ?? $error['Title'] ?? $error['ErrorCode'] ?? 'Ismeretlen Barion hiba'),
+        };
+    }
+
+    /**
+     * @param  array<string, mixed>  $context
+     */
+    private function logBarionWarning(string $message, array $context = []): void
+    {
+        try {
+            Log::warning($message, $context);
+        } catch (\Throwable) {
+            // Ne omoljon össze a rendelés, ha a naplófájl nem írható.
+        }
     }
 }

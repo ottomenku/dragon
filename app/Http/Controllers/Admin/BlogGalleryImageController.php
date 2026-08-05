@@ -13,13 +13,13 @@ class BlogGalleryImageController extends Controller
     {
         $request->validate([
             'images' => ['required', 'array', 'min:1'],
-            'images.*' => ['file', 'mimes:jpeg,jpg,png,gif,webp', 'max:4096'],
+            'images.*' => ['file', 'mimes:jpeg,jpg,png,gif,webp', 'max:20480'],
         ]);
 
         $uploaded = [];
 
         foreach ($request->file('images', []) as $file) {
-            $path = PublicUploads::storeImage($file);
+            $path = PublicUploads::storeImage($file, 'images');
             $uploaded[] = [
                 'path' => $path,
                 'url' => PublicUploads::url($path),
