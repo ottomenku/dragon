@@ -48,14 +48,35 @@ class BarionPaymentService
             $qty = max(1, (int) ($row['qty'] ?? 1));
             $unit = (int) ($row['price'] ?? 0);
             $lineTotal = $unit * $qty;
+            $name = trim((string) ($row['title'] ?? ''));
+            if ($name === '') {
+                $name = 'Termék';
+            }
             $items[] = [
-                'Name' => (string) ($row['title'] ?? 'Termék'),
-                'Description' => '',
+                'Name' => $name,
+                'Description' => Str::limit($name, 500, ''),
                 'Quantity' => $qty,
                 'Unit' => 'db',
                 'UnitPrice' => $unit,
                 'ItemTotal' => $lineTotal,
                 'SKU' => (string) ($row['id'] ?? ''),
+            ];
+        }
+
+        $shippingFee = (int) ($order->shipping_fee ?? 0);
+        if ($shippingFee > 0) {
+            $shippingName = trim($order->shippingMethodLabel());
+            if ($shippingName === '' || $shippingName === '—') {
+                $shippingName = 'Szállítás';
+            }
+            $items[] = [
+                'Name' => $shippingName,
+                'Description' => $shippingName,
+                'Quantity' => 1,
+                'Unit' => 'db',
+                'UnitPrice' => $shippingFee,
+                'ItemTotal' => $shippingFee,
+                'SKU' => 'shipping',
             ];
         }
 
@@ -525,6 +546,7 @@ class BarionPaymentService
             $code === 'AuthenticationFailed' && $description === 'test_key_on_live' => 'A megadott POSKey a teszt (sandbox) környezethez tartozik, de az éles fizetés van kiválasztva. A Barion elfogadása után a secure.barion.com → Üzlet → Részletek menüből másolja be az éles Secret POSKey-t, és az adminban válassza az Éles környezetet.',
             $code === 'AuthenticationFailed' && $useTest => 'A Barion teszt POSKey érvénytelen. Ha a Barion már elfogadta a webshopot, válassza az Éles környezetet, és adja meg a secure.barion.com Secret POSKey-ét (ne a nyilvános kulcsot).',
             $code === 'AuthenticationFailed' => 'A Barion éles POSKey érvénytelen. Ellenőrizze, hogy a secure.barion.com → Üzlet → Részletek menüből a Secret POSKey került-e be (nem a teszt.barion.com kulcsa, és nem a nyilvános kulcs).',
+            $code === 'ModelValidationError' => 'A fizetés adatai hiányosak vagy hibásak. Próbálja újra, vagy válasszon másik fizetési módot.',
             $code === 'InsufficientFunds' => 'Nincs elegendő fedezet a kártyán.',
             $code === 'CardExpired' => 'A kártya lejárt.',
             default => (string) ($error['Description'] ?? $error['Title'] ?? $error['ErrorCode'] ?? 'Ismeretlen Barion hiba'),

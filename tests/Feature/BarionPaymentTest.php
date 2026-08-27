@@ -50,6 +50,40 @@ class BarionPaymentTest extends TestCase
         $this->assertFalse(BarionSetting::current()->use_test);
     }
 
+    public function test_start_payment_sends_item_description_and_shipping_line(): void
+    {
+        BarionSetting::query()->create([
+            'payee' => 'shop@example.com',
+            'pos_key' => 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee',
+            'use_test' => false,
+        ]);
+
+        $this->fakeBarionStart(acceptedEnv: 'live');
+
+        $order = $this->makeOrder();
+        $order->forceFill([
+            'shipping_fee' => 1500,
+            'shipping_method' => 'mpl',
+            'total_price' => 2500,
+        ])->save();
+
+        $result = app(BarionPaymentService::class)->startPayment($order);
+
+        $this->assertTrue($result['ok']);
+
+        $start = collect(Http::recorded())
+            ->first(fn ($pair) => str_contains($pair[0]->url(), '/Payment/Start'));
+        $this->assertNotNull($start);
+
+        $payload = $start[0]->data();
+        $items = $payload['Transactions'][0]['Items'];
+        $this->assertNotSame('', $items[0]['Description']);
+        $this->assertSame('Termék', $items[0]['Description']);
+        $this->assertSame('shipping', $items[1]['SKU']);
+        $this->assertSame(1500, $items[1]['ItemTotal']);
+        $this->assertSame(2500, $payload['Transactions'][0]['Total']);
+    }
+
     public function test_authentication_failed_on_both_environments(): void
     {
         BarionSetting::query()->create([
