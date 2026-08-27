@@ -7,6 +7,7 @@ use App\Models\PaymentMethodSetting;
 use App\Models\User;
 use App\Support\BarionBranding;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
 class BarionFooterBrandingTest extends TestCase
@@ -71,6 +72,11 @@ class BarionFooterBrandingTest extends TestCase
             'pos_key' => 'test-pos-key',
             'use_test' => true,
             'pixel_footer_enabled' => false,
+        ]);
+
+        Http::fake([
+            'api.test.barion.com/*' => Http::response(['Errors' => [['ErrorCode' => 'AuthenticationFailed']]], 401),
+            'api.barion.com/*' => Http::response(['Errors' => [['ErrorCode' => 'AuthenticationFailed']]], 401),
         ]);
 
         $this->actingAs($admin)->put(route('admin.barion.update'), [

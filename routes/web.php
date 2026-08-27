@@ -94,6 +94,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(fun
     Route::resource('orders', AdminOrderController::class)->except(['create', 'store']);
     Route::get('barion', [BarionSettingsController::class, 'edit'])->name('barion.edit');
     Route::put('barion', [BarionSettingsController::class, 'update'])->name('barion.update');
+    Route::match(['post', 'put'], 'barion/test', [BarionSettingsController::class, 'test'])->name('barion.test');
     Route::get('webshop', [WebshopSettingsController::class, 'edit'])->name('webshop.edit');
     Route::put('webshop', [WebshopSettingsController::class, 'update'])->name('webshop.update');
     Route::get('payment-methods', [PaymentMethodSettingsController::class, 'edit'])->name('payment-methods.edit');

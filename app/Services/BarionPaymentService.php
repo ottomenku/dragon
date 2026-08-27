@@ -19,6 +19,8 @@ class BarionPaymentService
 
     private const PAY_PROD = 'https://secure.barion.com/Pay';
 
+    private const PROBE_PAYMENT_ID = '00000000-0000-0000-0000-000000000001';
+
     public function isReady(): bool
     {
         $s = BarionSetting::current();
@@ -36,13 +38,10 @@ class BarionPaymentService
             return ['ok' => false, 'message' => 'A Barion fizetés nincs beállítva.'];
         }
 
-        $posKey = $settings->pos_key;
-        $apiBase = $settings->use_test ? self::API_TEST : self::API_PROD;
-        $payBase = $settings->use_test ? self::PAY_TEST : self::PAY_PROD;
-
-        $paymentRequestId = 'order-'.$order->id.'-'.Str::lower(Str::random(10));
-        $redirectUrl = route('payment.barion.return', [], true);
-        $callbackUrl = route('payment.barion.callback', [], true);
+        $posKey = self::normalizePosKey($settings->pos_key);
+        if ($posKey === null) {
+            return ['ok' => false, 'message' => 'A Barion fizetés nincs beállítva.'];
+        }
 
         $items = [];
         foreach ($order->items ?? [] as $row) {
@@ -69,12 +68,12 @@ class BarionPaymentService
             'PaymentType' => 'Immediate',
             'GuestCheckOut' => true,
             'FundingSources' => ['All'],
-            'PaymentRequestId' => $paymentRequestId,
+            'PaymentRequestId' => 'order-'.$order->id.'-'.Str::lower(Str::random(10)),
             'Locale' => 'hu-HU',
             'Currency' => 'HUF',
             'OrderNumber' => (string) $order->id,
-            'RedirectUrl' => $redirectUrl,
-            'CallbackUrl' => $callbackUrl,
+            'RedirectUrl' => route('payment.barion.return', [], true),
+            'CallbackUrl' => route('payment.barion.callback', [], true),
             'Transactions' => [[
                 'POSTransactionId' => 'webshop-'.$order->id,
                 'Payee' => $settings->payee,
@@ -84,23 +83,21 @@ class BarionPaymentService
             ]],
         ];
 
-        $url = $apiBase.'/v2/Payment/Start';
+        $preferTest = (bool) $settings->use_test;
+        $started = $this->postStartPayment(
+            $preferTest ? self::API_TEST : self::API_PROD,
+            $payload
+        );
 
-        try {
-            $response = Http::timeout(30)
-                ->withHeaders([
-                    'x-pos-key' => $posKey,
-                    'Accept' => 'application/json',
-                ])
-                ->asJson()
-                ->post($url, $payload);
-        } catch (\Throwable $e) {
-            Log::error('Barion StartPayment hálózati hiba', ['exception' => $e]);
+        if ($this->isAuthenticationFailed($started['json'] ?? null)) {
+            $started = $this->recoverFromAuthenticationFailure($settings, $preferTest, $payload);
+        }
 
+        if (! empty($started['network_error'])) {
             return ['ok' => false, 'message' => 'A fizetési szolgáltató nem érhető el. Próbálja újra később.'];
         }
 
-        $json = $response->json();
+        $json = $started['json'] ?? null;
         if (! is_array($json)) {
             return ['ok' => false, 'message' => 'Érvénytelen válasz a fizetési szolgáltatótól.'];
         }
@@ -108,7 +105,7 @@ class BarionPaymentService
         if (! empty($json['Errors']) && is_array($json['Errors'])) {
             $first = $json['Errors'][0] ?? [];
             $msg = is_array($first)
-                ? $this->userFacingErrorMessage($first)
+                ? $this->userFacingErrorMessage($first, (bool) $settings->fresh()?->use_test)
                 : 'Barion hiba';
 
             $this->logBarionWarning('Barion StartPayment API hiba', ['errors' => $json['Errors']]);
@@ -121,12 +118,13 @@ class BarionPaymentService
             return ['ok' => false, 'message' => 'Hiányzó fizetésazonosító a Barion válaszból.'];
         }
 
-        $redirectUrlOut = $payBase.'?'.http_build_query(['id' => $paymentId]);
+        $useTest = (bool) $settings->fresh()?->use_test;
+        $payBase = $useTest ? self::PAY_TEST : self::PAY_PROD;
 
         return [
             'ok' => true,
             'payment_id' => $paymentId,
-            'redirect_url' => $redirectUrlOut,
+            'redirect_url' => $payBase.'?'.http_build_query(['id' => $paymentId]),
         ];
     }
 
@@ -176,7 +174,11 @@ class BarionPaymentService
             return;
         }
 
-        $posKey = $settings->pos_key;
+        $posKey = self::normalizePosKey($settings->pos_key);
+        if ($posKey === null) {
+            return;
+        }
+
         $apiBase = $settings->use_test ? self::API_TEST : self::API_PROD;
         $url = $apiBase.'/v4/Payment/'.$order->barion_payment_id.'/PaymentState';
 
@@ -296,16 +298,235 @@ class BarionPaymentService
     }
 
     /**
+     * @return 'test'|'live'|null
+     */
+    public function detectEnvironment(?string $posKey): ?string
+    {
+        $posKey = self::normalizePosKey($posKey);
+        if ($posKey === null) {
+            return null;
+        }
+
+        $testOk = $this->posKeyAccepted(self::API_TEST, $posKey);
+        $liveOk = $this->posKeyAccepted(self::API_PROD, $posKey);
+
+        if ($liveOk && ! $testOk) {
+            return 'live';
+        }
+        if ($testOk && ! $liveOk) {
+            return 'test';
+        }
+
+        return null;
+    }
+
+    /**
+     * @return array{ok: bool, environment: 'test'|'live'|null, message: string}
+     */
+    public function verifyConnection(?string $posKey, bool $useTest): array
+    {
+        $posKey = self::normalizePosKey($posKey);
+        if ($posKey === null) {
+            return [
+                'ok' => false,
+                'environment' => null,
+                'message' => 'Nincs megadva POSKey.',
+            ];
+        }
+
+        $detected = $this->detectEnvironment($posKey);
+        $selected = $useTest ? 'test' : 'live';
+
+        if ($detected === $selected) {
+            return [
+                'ok' => true,
+                'environment' => $detected,
+                'message' => $detected === 'live'
+                    ? 'Az éles POSKey érvényes. A kártyás fizetés használható.'
+                    : 'A teszt POSKey érvényes a sandboxban. Éles fizetéshez a secure.barion.com Secret POSKey-e kell.',
+            ];
+        }
+
+        if ($detected === 'live') {
+            return [
+                'ok' => false,
+                'environment' => 'live',
+                'message' => 'Ez a POSKey az éles környezethez tartozik. Válassza az Éles (production) beállítást.',
+            ];
+        }
+
+        if ($detected === 'test') {
+            return [
+                'ok' => false,
+                'environment' => 'test',
+                'message' => 'Ez a POSKey a teszt (sandbox) környezethez tartozik. A Barion elfogadása után az éles Secret POSKey-t a secure.barion.com → Üzlet → Részletek menüből kell bemásolni, és az Éles környezetet kell választani.',
+            ];
+        }
+
+        return [
+            'ok' => false,
+            'environment' => null,
+            'message' => 'A POSKey egyik Barion környezetben sem érvényes. A Secret (nem a nyilvános) kulcsot adja meg, szóköz és kapcsos zárójel nélkül.',
+        ];
+    }
+
+    public static function normalizePosKey(?string $posKey): ?string
+    {
+        if ($posKey === null) {
+            return null;
+        }
+
+        $posKey = trim($posKey);
+        $posKey = trim($posKey, "{} \t\n\r\0\x0B\"'");
+        $posKey = preg_replace('/\s+/', '', $posKey) ?? $posKey;
+
+        return $posKey === '' ? null : $posKey;
+    }
+
+    /**
+     * Teszt kulccsal ne engedjünk élesnek beállított shopon sandbox fizetést.
+     *
+     * @param  array<string, mixed>  $payload
+     * @return array{json: ?array, network_error: bool}
+     */
+    private function recoverFromAuthenticationFailure(BarionSetting $settings, bool $preferTest, array $payload): array
+    {
+        $detected = $this->detectEnvironment($payload['POSKey'] ?? null);
+
+        if ($preferTest && $detected === 'live') {
+            $retry = $this->postStartPayment(self::API_PROD, $payload);
+            if ($this->isSuccessfulStart($retry['json'] ?? null)) {
+                $settings->use_test = false;
+                $settings->save();
+                $this->logBarionWarning('Barion környezet automatikusan élesre váltva: a POSKey az éles API-n érvényes.');
+            }
+
+            return $retry;
+        }
+
+        if (! $preferTest && $detected === 'test') {
+            return [
+                'json' => [
+                    'Errors' => [[
+                        'ErrorCode' => 'AuthenticationFailed',
+                        'Description' => 'test_key_on_live',
+                    ]],
+                ],
+                'network_error' => false,
+            ];
+        }
+
+        return [
+            'json' => [
+                'Errors' => [[
+                    'ErrorCode' => 'AuthenticationFailed',
+                    'Description' => 'The login information provided is incorrect.',
+                ]],
+            ],
+            'network_error' => false,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array{json: ?array, network_error: bool}
+     */
+    private function postStartPayment(string $apiBase, array $payload): array
+    {
+        $url = $apiBase.'/v2/Payment/Start';
+
+        try {
+            $response = Http::timeout(30)
+                ->acceptJson()
+                ->asJson()
+                ->post($url, $payload);
+        } catch (\Throwable $e) {
+            Log::error('Barion StartPayment hálózati hiba', ['exception' => $e]);
+
+            return ['json' => null, 'network_error' => true];
+        }
+
+        $json = $response->json();
+
+        return [
+            'json' => is_array($json) ? $json : null,
+            'network_error' => false,
+        ];
+    }
+
+    private function posKeyAccepted(string $apiBase, string $posKey): bool
+    {
+        $url = $apiBase.'/v2/Payment/GetPaymentState';
+
+        try {
+            $response = Http::timeout(15)
+                ->acceptJson()
+                ->get($url, [
+                    'POSKey' => $posKey,
+                    'PaymentId' => self::PROBE_PAYMENT_ID,
+                ]);
+        } catch (\Throwable) {
+            return false;
+        }
+
+        $json = $response->json();
+        if (! is_array($json)) {
+            return false;
+        }
+
+        return ! $this->isAuthenticationFailed($json);
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $json
+     */
+    private function isAuthenticationFailed(?array $json): bool
+    {
+        if ($json === null || empty($json['Errors']) || ! is_array($json['Errors'])) {
+            return false;
+        }
+
+        foreach ($json['Errors'] as $error) {
+            if (is_array($error) && ($error['ErrorCode'] ?? '') === 'AuthenticationFailed') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $json
+     */
+    private function isSuccessfulStart(?array $json): bool
+    {
+        if ($json === null) {
+            return false;
+        }
+
+        if (! empty($json['Errors'])) {
+            return false;
+        }
+
+        $paymentId = $json['PaymentId'] ?? null;
+
+        return is_string($paymentId) && $paymentId !== '';
+    }
+
+    /**
      * @param  array<string, mixed>  $error
      */
-    private function userFacingErrorMessage(array $error): string
+    private function userFacingErrorMessage(array $error, bool $useTest): string
     {
         $code = (string) ($error['ErrorCode'] ?? '');
+        $description = (string) ($error['Description'] ?? '');
 
-        return match ($code) {
-            'AuthenticationFailed' => 'A Barion fizetés beállítása hibás (teszt/éles POSKey vagy payee). Kérjük, ellenőrizze az admin Barion beállításokat, vagy válasszon másik fizetési módot.',
-            'InsufficientFunds' => 'Nincs elegendő fedezet a kártyán.',
-            'CardExpired' => 'A kártya lejárt.',
+        return match (true) {
+            $code === 'AuthenticationFailed' && $description === 'test_key_on_live' => 'A megadott POSKey a teszt (sandbox) környezethez tartozik, de az éles fizetés van kiválasztva. A Barion elfogadása után a secure.barion.com → Üzlet → Részletek menüből másolja be az éles Secret POSKey-t, és az adminban válassza az Éles környezetet.',
+            $code === 'AuthenticationFailed' && $useTest => 'A Barion teszt POSKey érvénytelen. Ha a Barion már elfogadta a webshopot, válassza az Éles környezetet, és adja meg a secure.barion.com Secret POSKey-ét (ne a nyilvános kulcsot).',
+            $code === 'AuthenticationFailed' => 'A Barion éles POSKey érvénytelen. Ellenőrizze, hogy a secure.barion.com → Üzlet → Részletek menüből a Secret POSKey került-e be (nem a teszt.barion.com kulcsa, és nem a nyilvános kulcs).',
+            $code === 'InsufficientFunds' => 'Nincs elegendő fedezet a kártyán.',
+            $code === 'CardExpired' => 'A kártya lejárt.',
             default => (string) ($error['Description'] ?? $error['Title'] ?? $error['ErrorCode'] ?? 'Ismeretlen Barion hiba'),
         };
     }

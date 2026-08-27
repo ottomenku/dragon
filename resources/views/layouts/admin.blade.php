@@ -26,6 +26,9 @@
         @if (session('success'))
             <div class="mb-4 p-3 bg-emerald-100 border border-emerald-300 rounded-lg text-emerald-800">{{ session('success') }}</div>
         @endif
+        @if (session('warning'))
+            <div class="mb-4 p-3 bg-amber-100 border border-amber-300 rounded-lg text-amber-900">{{ session('warning') }}</div>
+        @endif
         @if ($errors->any())
             <div class="mb-4 p-3 bg-red-100 border border-red-300 rounded-lg text-red-800">
                 <ul class="list-disc list-inside space-y-1">
